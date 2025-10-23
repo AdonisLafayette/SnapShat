@@ -10,62 +10,66 @@ export function useWebSocket(url: string) {
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
-
-  const connect = useCallback(() => {
-    try {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}${url}`;
-      
-      const ws = new WebSocket(wsUrl);
-      
-      ws.onopen = () => {
-        console.log('WebSocket connected');
-        setIsConnected(true);
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          setLastMessage(message);
-        } catch (error) {
-          console.error('Failed to parse WebSocket message:', error);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-      };
-
-      ws.onclose = () => {
-        console.log('WebSocket disconnected');
-        setIsConnected(false);
-        wsRef.current = null;
-        
-        // Attempt to reconnect after 3 seconds
-        reconnectTimeoutRef.current = setTimeout(() => {
-          console.log('Attempting to reconnect WebSocket...');
-          connect();
-        }, 3000);
-      };
-
-      wsRef.current = ws;
-    } catch (error) {
-      console.error('Failed to create WebSocket:', error);
-    }
-  }, [url]);
+  const messageIdRef = useRef<number>(0);
 
   useEffect(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}${url}`;
+    
+    let ws: WebSocket | null = null;
+    let reconnectTimeout: NodeJS.Timeout | undefined;
+    
+    const connect = () => {
+      try {
+        ws = new WebSocket(wsUrl);
+        
+        ws.onopen = () => {
+          console.log('WebSocket connected');
+          setIsConnected(true);
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            // Add unique ID to prevent duplicate processing
+            setLastMessage({ ...message, _id: ++messageIdRef.current });
+          } catch (error) {
+            console.error('Failed to parse WebSocket message:', error);
+          }
+        };
+
+        ws.onerror = (error) => {
+          console.error('WebSocket error:', error);
+        };
+
+        ws.onclose = () => {
+          console.log('WebSocket disconnected');
+          setIsConnected(false);
+          
+          // Attempt to reconnect after 3 seconds
+          reconnectTimeout = setTimeout(() => {
+            console.log('Attempting to reconnect WebSocket...');
+            connect();
+          }, 3000);
+        };
+
+        wsRef.current = ws;
+      } catch (error) {
+        console.error('Failed to create WebSocket:', error);
+      }
+    };
+    
     connect();
 
     return () => {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
       }
-      if (wsRef.current) {
-        wsRef.current.close();
+      if (ws) {
+        ws.close();
       }
     };
-  }, [connect]);
+  }, [url]);
 
   return { isConnected, lastMessage };
 }
