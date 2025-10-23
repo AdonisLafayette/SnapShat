@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useWebSocket } from "@/hooks/useWebSocket";
@@ -37,6 +37,9 @@ export default function Dashboard() {
   const [captchaFriend, setCaptchaFriend] = useState<string>();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [friendStatuses, setFriendStatuses] = useState<Record<string, SubmissionStatus>>({});
+  
+  // Use a ref to cache friends map to avoid re-running WebSocket effect
+  const friendsMapRef = useRef<Map<string, Friend>>(new Map());
 
   // Fetch friends
   const { data: friends = [], isLoading: friendsLoading } = useQuery<Friend[]>({
@@ -53,6 +56,15 @@ export default function Dashboard() {
     queryKey: ['/api/settings'],
   });
 
+  // Update friends map when friends change
+  useEffect(() => {
+    const newMap = new Map<string, Friend>();
+    friends.forEach(friend => {
+      newMap.set(friend.id, friend);
+    });
+    friendsMapRef.current = newMap;
+  }, [friends]);
+
   // Update friend statuses when submissions change
   useEffect(() => {
     const statusMap: Record<string, SubmissionStatus> = {};
@@ -68,6 +80,17 @@ export default function Dashboard() {
 
     const { type, data } = lastMessage;
 
+    const addLogEntry = (entry: Omit<LogEntry, 'id' | 'timestamp'>) => {
+      setLogs(prev => [
+        {
+          ...entry,
+          id: `${Date.now()}-${Math.random()}`,
+          timestamp: new Date(),
+        },
+        ...prev,
+      ].slice(0, 100));
+    };
+
     switch (type) {
       case 'status_update':
         setFriendStatuses(prev => ({
@@ -75,9 +98,10 @@ export default function Dashboard() {
           [data.friendId]: data.status,
         }));
         
-        const friend = friends.find(f => f.id === data.friendId);
+        // Look up friend name from ref to avoid dependency on friends array
+        const friend = friendsMapRef.current.get(data.friendId);
         if (friend) {
-          addLog({
+          addLogEntry({
             friendUsername: friend.username,
             action: data.message,
             status: data.status === 'failed' ? 'error' : 
@@ -90,19 +114,16 @@ export default function Dashboard() {
             setCaptchaOpen(true);
           }
         }
-        
-        queryClient.invalidateQueries({ queryKey: ['/api/submissions'] });
         break;
 
       case 'friend_added':
       case 'friends_imported':
         queryClient.invalidateQueries({ queryKey: ['/api/friends'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/submissions'] });
         break;
 
       case 'processing_stopped':
         setIsProcessing(false);
-        addLog({
+        addLogEntry({
           friendUsername: 'System',
           action: 'Batch processing stopped',
           status: 'warning',
@@ -118,18 +139,7 @@ export default function Dashboard() {
         });
         break;
     }
-  }, [lastMessage, friends, toast]);
-
-  const addLog = useCallback((entry: Omit<LogEntry, 'id' | 'timestamp'>) => {
-    setLogs(prev => [
-      {
-        ...entry,
-        id: `${Date.now()}-${Math.random()}`,
-        timestamp: new Date(),
-      },
-      ...prev,
-    ].slice(0, 100)); // Keep last 100 logs
-  }, []);
+  }, [lastMessage]);
 
   const filteredFriends = useMemo(() => {
     if (!searchQuery.trim()) return friends;
@@ -140,6 +150,17 @@ export default function Dashboard() {
   const processedCount = useMemo(() => {
     return Object.values(friendStatuses).filter(s => s === 'success' || s === 'failed').length;
   }, [friendStatuses]);
+
+  const addLog = (entry: Omit<LogEntry, 'id' | 'timestamp'>) => {
+    setLogs(prev => [
+      {
+        ...entry,
+        id: `${Date.now()}-${Math.random()}`,
+        timestamp: new Date(),
+      },
+      ...prev,
+    ].slice(0, 100));
+  };
 
   // Mutations
   const addFriendMutation = useMutation({
