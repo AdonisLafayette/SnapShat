@@ -144,11 +144,8 @@ export default function Dashboard() {
   // Mutations
   const addFriendMutation = useMutation({
     mutationFn: async (username: string) => {
-      return await apiRequest('/api/friends', {
-        method: 'POST',
-        body: JSON.stringify({ username, profilePictureUrl: null }),
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const res = await apiRequest('POST', '/api/friends', { username, profilePictureUrl: null });
+      return await res.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/friends'] });
@@ -173,11 +170,8 @@ export default function Dashboard() {
 
   const saveSettingsMutation = useMutation({
     mutationFn: async (newSettings: { username: string; email: string; phone: string }) => {
-      return await apiRequest('/api/settings', {
-        method: 'POST',
-        body: JSON.stringify(newSettings),
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const res = await apiRequest('POST', '/api/settings', newSettings);
+      return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
@@ -195,7 +189,8 @@ export default function Dashboard() {
 
   const clearCookiesMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest('/api/cookies', { method: 'DELETE' });
+      const res = await apiRequest('DELETE', '/api/cookies');
+      return await res.json();
     },
     onSuccess: () => {
       toast({
@@ -212,11 +207,8 @@ export default function Dashboard() {
 
   const startProcessingMutation = useMutation({
     mutationFn: async (friendIds: string[]) => {
-      return await apiRequest('/api/process/start', {
-        method: 'POST',
-        body: JSON.stringify({ friendIds }),
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const res = await apiRequest('POST', '/api/process/start', { friendIds });
+      return await res.json();
     },
     onSuccess: () => {
       setIsProcessing(true);
@@ -241,7 +233,8 @@ export default function Dashboard() {
 
   const stopProcessingMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest('/api/process/stop', { method: 'POST' });
+      const res = await apiRequest('POST', '/api/process/stop');
+      return await res.json();
     },
     onSuccess: () => {
       setIsProcessing(false);
@@ -325,10 +318,8 @@ export default function Dashboard() {
     addFriendMutation.mutate(username);
   };
 
-  const handleSaveSettings = (newSettings: typeof settings) => {
-    if (newSettings) {
-      saveSettingsMutation.mutate(newSettings);
-    }
+  const handleSaveSettings = (newSettings: { username: string; email: string; phone: string }) => {
+    saveSettingsMutation.mutate(newSettings);
   };
 
   const handleClearCookies = () => {
