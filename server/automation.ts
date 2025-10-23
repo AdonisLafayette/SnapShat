@@ -4,6 +4,8 @@ import type { Friend, SubmissionStatus } from '@shared/schema';
 
 const TICKET_URL = "https://help.snapchat.com/hc/en-us/requests/new?co=true&ticket_form_id=149423";
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 interface AutomationResult {
   success: boolean;
   requiresCaptcha: boolean;
@@ -126,7 +128,7 @@ export class SnapchatAutomation {
           
           // Try multiple filling strategies
           await element.click();
-          await page.waitForTimeout(200);
+          await delay(200);
           
           // Clear existing value
           await element.evaluate((el: any) => {
@@ -144,7 +146,7 @@ export class SnapchatAutomation {
             el.dispatchEvent(new Event('blur', { bubbles: true }));
           }, value);
 
-          await page.waitForTimeout(200);
+          await delay(200);
           return true;
         }
       } catch (error) {
@@ -228,7 +230,7 @@ export class SnapchatAutomation {
         if (button) {
           console.log('Clicking submit button:', selector);
           await button.click();
-          await page.waitForTimeout(1000);
+          await delay(1000);
           return true;
         }
       } catch (error) {
@@ -282,7 +284,7 @@ export class SnapchatAutomation {
         await page.goto(TICKET_URL, { waitUntil: 'networkidle2', timeout: 30000 });
       }
 
-      await page.waitForTimeout(1500);
+      await delay(1500);
 
       // Check for captcha
       const hasCaptcha = await this.detectCaptcha(page);
@@ -301,7 +303,7 @@ export class SnapchatAutomation {
         return { success: false, requiresCaptcha: false, error: 'Failed to fill form fields' };
       }
 
-      await page.waitForTimeout(500);
+      await delay(500);
 
       // Submit form
       onStatusUpdate('running', `Submitting form for ${friend.username}`);
