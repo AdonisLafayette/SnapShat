@@ -422,10 +422,10 @@ export class SnapchatAutomation {
   }
 
   async processBatch(friendIds: string[], onStatusUpdate: (friendId: string, status: SubmissionStatus, message: string) => void): Promise<void> {
-    this.isProcessing = true;
     this.shouldStop = false;
 
     try {
+      this.isProcessing = true;
       await this.initialize();
 
       for (const friendId of friendIds) {

@@ -38,8 +38,14 @@ export default function Dashboard() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [friendStatuses, setFriendStatuses] = useState<Record<string, SubmissionStatus>>({});
   
-  // Use a ref to cache friends map to avoid re-running WebSocket effect
+  // Use refs to avoid dependency issues in WebSocket effect
   const friendsMapRef = useRef<Map<string, Friend>>(new Map());
+  const toastRef = useRef(toast);
+  
+  // Keep toast ref updated
+  useEffect(() => {
+    toastRef.current = toast;
+  }, [toast]);
 
   // Fetch friends
   const { data: friends = [], isLoading: friendsLoading } = useQuery<Friend[]>({
@@ -131,7 +137,7 @@ export default function Dashboard() {
 
         case 'processing_error':
           setIsProcessing(false);
-          toast({
+          toastRef.current({
             title: "Processing Error",
             description: data.error,
             variant: "destructive",
@@ -139,7 +145,7 @@ export default function Dashboard() {
           break;
       }
     });
-  }, [setMessageHandler, toast]);
+  }, [setMessageHandler]);
 
   const filteredFriends = useMemo(() => {
     if (!searchQuery.trim()) return friends;
