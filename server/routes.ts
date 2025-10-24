@@ -219,7 +219,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/process/status', async (req, res) => {
     try {
-      res.json({ isProcessing: automation.getIsProcessing() });
+      const currentFriend = automation.getCurrentFriend();
+      res.json({ 
+        isProcessing: automation.getIsProcessing(),
+        currentFriend: currentFriend ? { 
+          id: currentFriend.id, 
+          username: currentFriend.username 
+        } : null
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get('/api/process/screenshot', async (req, res) => {
+    try {
+      const screenshot = await automation.getCurrentScreenshot();
+      if (!screenshot) {
+        return res.status(404).json({ error: 'No active browser page' });
+      }
+      res.json({ screenshot: `data:image/png;base64,${screenshot}` });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/process/manual-submit', async (req, res) => {
+    try {
+      const success = await automation.manualSubmit();
+      broadcast('manual_action', { action: 'submit', success });
+      res.json({ success });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/process/manual-refresh', async (req, res) => {
+    try {
+      const success = await automation.manualRefresh();
+      broadcast('manual_action', { action: 'refresh', success });
+      res.json({ success });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

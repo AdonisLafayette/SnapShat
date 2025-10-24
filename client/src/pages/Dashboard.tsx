@@ -11,6 +11,7 @@ import SettingsDialog from "@/components/SettingsDialog";
 import CaptchaModal from "@/components/CaptchaModal";
 import EmptyState from "@/components/EmptyState";
 import SearchBar from "@/components/SearchBar";
+import BrowserView from "@/components/BrowserView";
 import { Button } from "@/components/ui/button";
 import { UserPlus, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -61,6 +62,19 @@ export default function Dashboard() {
   const { data: settings } = useQuery<Settings | null>({
     queryKey: ['/api/settings'],
   });
+
+  // Fetch process status
+  const { data: processStatus } = useQuery<{ isProcessing: boolean; currentFriend: { id: string; username: string } | null }>({
+    queryKey: ['/api/process/status'],
+    refetchInterval: 1000, // Always poll to stay in sync with server
+  });
+
+  // Sync local isProcessing state with server
+  useEffect(() => {
+    if (processStatus) {
+      setIsProcessing(processStatus.isProcessing);
+    }
+  }, [processStatus]);
 
   // Update friends map when friends change
   useEffect(() => {
@@ -400,6 +414,14 @@ export default function Dashboard() {
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
+                  {/* Browser View when processing */}
+                  {processStatus?.isProcessing && processStatus?.currentFriend && (
+                    <BrowserView 
+                      isActive={processStatus.isProcessing} 
+                      currentFriend={processStatus.currentFriend}
+                    />
+                  )}
+
                   <div className="flex items-center gap-3">
                     <div className="flex-1">
                       <SearchBar

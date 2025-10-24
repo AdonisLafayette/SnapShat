@@ -16,6 +16,8 @@ export class SnapchatAutomation {
   private browser: Browser | null = null;
   private isProcessing = false;
   private shouldStop = false;
+  private currentPage: Page | null = null;
+  private currentFriend: Friend | null = null;
 
   async initialize() {
     if (!this.browser) {
@@ -113,6 +115,19 @@ export class SnapchatAutomation {
 
   async detectCaptcha(page: Page): Promise<boolean> {
     try {
+      // Check for Cloudflare Turnstile (most common on Snapchat)
+      const hasTurnstile = await page.evaluate(() => {
+        const turnstileInputs = document.querySelectorAll('input[name="cf-turnstile-response"]');
+        const turnstileIframes = document.querySelectorAll('iframe[src*="cloudflare"]');
+        const challengeElements = document.querySelectorAll('[id*="cf-chl"]');
+        return turnstileInputs.length > 0 || turnstileIframes.length > 0 || challengeElements.length > 0;
+      });
+
+      if (hasTurnstile) {
+        console.log('✓ Cloudflare Turnstile CAPTCHA detected');
+        return true;
+      }
+
       // Check for common captcha indicators
       const captchaSelectors = [
         'iframe[src*="recaptcha"]',
@@ -123,6 +138,7 @@ export class SnapchatAutomation {
         '[class*="captcha"]',
         '[id*="captcha"]',
         'div[data-sitekey]', // reCAPTCHA element
+        '.cf-turnstile', // Cloudflare Turnstile class
       ];
 
       for (const selector of captchaSelectors) {
@@ -138,7 +154,9 @@ export class SnapchatAutomation {
         const bodyText = document.body.innerText.toLowerCase();
         return bodyText.includes('captcha') || 
                bodyText.includes('verify you are human') ||
-               bodyText.includes('prove you are not a robot');
+               bodyText.includes('prove you are not a robot') ||
+               bodyText.includes('just a moment') || // Cloudflare challenge page
+               bodyText.includes('checking your browser');
       });
 
       if (hasCaptchaText) {
@@ -396,6 +414,8 @@ export class SnapchatAutomation {
       console.log(`\n🔄 Starting to process ${friend.username}...`);
       console.log('📄 Creating new browser page...');
       page = await this.browser!.newPage();
+      this.currentPage = page;
+      this.currentFriend = friend;
       console.log('✓ Browser page created successfully');
       
       // Wait for page to be ready before doing anything
@@ -554,9 +574,11 @@ export class SnapchatAutomation {
       onStatusUpdate('failed', `Error: ${error.message}`);
       return { success: false, requiresCaptcha: false, error: error.message };
     } finally {
-      if (page) {
+      if (page && page === this.currentPage) {
         console.log('🧹 Closing browser page...');
         await page.close().catch(err => console.error('Error closing page:', err));
+        this.currentPage = null;
+        this.currentFriend = null;
         console.log('✓ Page closed');
       }
       console.log(`✅ Finished processing ${friend.username}\n`);
@@ -636,6 +658,52 @@ export class SnapchatAutomation {
 
   getIsProcessing(): boolean {
     return this.isProcessing;
+  }
+
+  getCurrentPage(): Page | null {
+    return this.currentPage;
+  }
+
+  getCurrentFriend(): Friend | null {
+    return this.currentFriend;
+  }
+
+  async getCurrentScreenshot(): Promise<string | null> {
+    if (!this.currentPage) {
+      return null;
+    }
+    try {
+      const screenshot = await this.currentPage.screenshot({ encoding: 'base64', fullPage: false });
+      return screenshot;
+    } catch (error) {
+      console.error('Error taking screenshot:', error);
+      return null;
+    }
+  }
+
+  async manualSubmit(): Promise<boolean> {
+    if (!this.currentPage) {
+      console.error('No active page for manual submit');
+      return false;
+    }
+    console.log('🖱️ Manual submit triggered');
+    return await this.submitForm(this.currentPage);
+  }
+
+  async manualRefresh(): Promise<boolean> {
+    if (!this.currentPage) {
+      console.error('No active page for manual refresh');
+      return false;
+    }
+    try {
+      console.log('🔄 Manual refresh triggered');
+      await this.currentPage.reload({ waitUntil: 'domcontentloaded', timeout: 30000 });
+      await delay(2000);
+      return true;
+    } catch (error) {
+      console.error('Error refreshing page:', error);
+      return false;
+    }
   }
 }
 
