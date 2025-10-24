@@ -311,58 +311,110 @@ export class SnapchatAutomation {
     const page = await this.browser!.newPage();
     
     try {
+      console.log(`\n🔄 Processing ${friend.username}...`);
       onStatusUpdate('running', `Loading Snapchat ticket page for ${friend.username}`);
       
       // Load cookies if available
       const cookiesLoaded = await this.loadCookies(page);
       
       if (!cookiesLoaded) {
-        await page.goto(TICKET_URL, { waitUntil: 'networkidle2', timeout: 30000 });
+        console.log('No cookies loaded, navigating to ticket page...');
+        await page.goto(TICKET_URL, { waitUntil: 'networkidle2', timeout: 60000 });
       }
 
-      await delay(1500);
+      console.log('Page loaded, waiting for form elements...');
+      await delay(2000); // Give page time to fully render
 
-      // Check for captcha
+      // Debug: Log all input fields on page
+      console.log('🔍 Debugging page inputs:');
+      const debugInfo = await page.evaluate(() => {
+        const inputs = document.querySelectorAll('input, textarea');
+        return Array.from(inputs).map(el => ({
+          tag: el.tagName,
+          type: (el as HTMLInputElement).type,
+          name: (el as HTMLInputElement).name,
+          id: el.id,
+          placeholder: (el as HTMLInputElement).placeholder,
+        }));
+      });
+      console.log('Found inputs:', JSON.stringify(debugInfo, null, 2));
+
+      // Check for captcha before filling form
       const hasCaptcha = await this.detectCaptcha(page);
       if (hasCaptcha) {
-        onStatusUpdate('captcha', `CAPTCHA detected for ${friend.username} - waiting for manual solve`);
-        const solved = await this.waitForCaptchaSolve(page);
+        console.log('⚠️ CAPTCHA detected before form filling');
+        onStatusUpdate('captcha', `CAPTCHA detected for ${friend.username} - please solve it in the browser window`);
+        const solved = await this.waitForCaptchaSolve(page, 300000); // 5 minutes
         if (!solved) {
           return { success: false, requiresCaptcha: true, error: 'CAPTCHA not solved within timeout' };
         }
+        console.log('✓ CAPTCHA solved, proceeding with form');
+        // Reload page after CAPTCHA to ensure clean state
+        await page.goto(TICKET_URL, { waitUntil: 'networkidle2', timeout: 60000 });
+        await delay(2000);
       }
 
       // Fill form
+      console.log('📝 Filling form fields...');
       onStatusUpdate('running', `Filling form fields for ${friend.username}`);
       const formFilled = await this.fillForm(page, friend);
       if (!formFilled) {
+        console.error('❌ Failed to fill form fields');
+        // Save page HTML for debugging
+        const html = await page.content();
+        console.log('Page HTML length:', html.length);
         return { success: false, requiresCaptcha: false, error: 'Failed to fill form fields' };
       }
 
-      await delay(500);
+      console.log('✓ Form filled successfully');
+      await delay(1000);
+
+      // Check for captcha again before submitting
+      const hasCaptchaBeforeSubmit = await this.detectCaptcha(page);
+      if (hasCaptchaBeforeSubmit) {
+        console.log('⚠️ CAPTCHA appeared after form filling');
+        onStatusUpdate('captcha', `CAPTCHA appeared - please solve it to continue`);
+        const solved = await this.waitForCaptchaSolve(page, 300000);
+        if (!solved) {
+          return { success: false, requiresCaptcha: true, error: 'CAPTCHA not solved within timeout' };
+        }
+        await delay(1000);
+      }
 
       // Submit form
+      console.log('📤 Submitting form...');
       onStatusUpdate('running', `Submitting form for ${friend.username}`);
       const submitted = await this.submitForm(page);
       if (!submitted) {
+        console.error('❌ Failed to find/click submit button');
         return { success: false, requiresCaptcha: false, error: 'Failed to submit form' };
       }
 
+      console.log('✓ Submit button clicked, waiting for success page...');
+
       // Wait for success
-      const success = await this.waitForSuccess(page);
+      const success = await this.waitForSuccess(page, 120000); // 2 minutes
       if (success) {
+        console.log('✅ Success page detected!');
         await this.saveCookies(page);
         onStatusUpdate('success', `Successfully submitted restoration request for ${friend.username}`);
         return { success: true, requiresCaptcha: false };
       } else {
+        console.error('❌ Success page not detected');
+        const currentUrl = page.url();
+        const pageText = await page.evaluate(() => document.body.textContent?.substring(0, 500));
+        console.log('Current URL:', currentUrl);
+        console.log('Page text:', pageText);
         return { success: false, requiresCaptcha: false, error: 'Success page not detected' };
       }
 
     } catch (error: any) {
-      console.error('Error processing friend:', error);
+      console.error('❌ Error processing friend:', error);
       return { success: false, requiresCaptcha: false, error: error.message };
     } finally {
-      await page.close();
+      // Keep page open if there was an error for debugging
+      // await page.close();
+      console.log(`Finished processing ${friend.username}\n`);
     }
   }
 
