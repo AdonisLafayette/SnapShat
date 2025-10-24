@@ -48,7 +48,8 @@ export class MemStorage implements IStorage {
   async createFriend(insertFriend: InsertFriend): Promise<Friend> {
     const id = randomUUID();
     const friend: Friend = { 
-      ...insertFriend, 
+      ...insertFriend,
+      profilePictureUrl: insertFriend.profilePictureUrl ?? null,
       id,
       addedAt: new Date()
     };
@@ -59,7 +60,8 @@ export class MemStorage implements IStorage {
   async deleteFriend(id: string): Promise<void> {
     this.friends.delete(id);
     // Also delete associated submissions
-    for (const [subId, sub] of this.submissions.entries()) {
+    const submissionsArray = Array.from(this.submissions.entries());
+    for (const [subId, sub] of submissionsArray) {
       if (sub.friendId === id) {
         this.submissions.delete(subId);
       }
