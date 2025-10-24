@@ -19,8 +19,12 @@ export class SnapchatAutomation {
 
   async initialize() {
     if (!this.browser) {
+      // Use system Chromium (installed via Nix)
+      const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium';
+      
       this.browser = await puppeteer.launch({
         headless: false, // Show browser for captcha solving
+        executablePath,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -28,9 +32,14 @@ export class SnapchatAutomation {
           '--disable-web-security',
           '--start-maximized',
           '--disable-blink-features=AutomationControlled',
+          '--disable-gpu',
+          '--disable-software-rasterizer',
+          '--single-process',
         ],
         defaultViewport: null,
       });
+      
+      console.log('✓ Browser initialized successfully with Chromium');
     }
   }
 
