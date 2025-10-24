@@ -393,24 +393,32 @@ export class SnapchatAutomation {
     let page: Page | null = null;
     
     try {
+      console.log(`\n🔄 Starting to process ${friend.username}...`);
+      console.log('📄 Creating new browser page...');
       page = await this.browser!.newPage();
+      console.log('✓ Browser page created successfully');
       
       // Wait for page to be ready before doing anything
       await delay(500);
-      console.log(`\n🔄 Processing ${friend.username}...`);
       onStatusUpdate('running', `Loading Snapchat ticket page for ${friend.username}`);
       
       // Load cookies if available
+      console.log('🍪 Attempting to load cookies...');
       const cookiesLoaded = await this.loadCookies(page);
       
       if (!cookiesLoaded) {
         console.log('No cookies loaded, navigating to ticket page...');
+        console.log(`🌐 Navigating to ${TICKET_URL}`);
         await page.goto(TICKET_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        console.log('✓ Navigation complete');
         await delay(2000); // Wait for page to fully load
+      } else {
+        console.log('✓ Cookies loaded successfully');
       }
 
-      console.log('Page loaded, waiting for form elements...');
+      console.log('⏳ Page loaded, waiting for form elements to render...');
       await delay(2000); // Give page time to fully render
+      console.log('✓ Wait complete, page should be ready')
 
       // Debug: Log all input fields on page
       console.log('🔍 Debugging page inputs:');
@@ -528,13 +536,30 @@ export class SnapchatAutomation {
       }
 
     } catch (error: any) {
-      console.error('❌ Error processing friend:', error);
+      console.error('❌ CRITICAL ERROR processing friend:', error);
+      console.error('Error stack:', error.stack);
+      
+      // Take screenshot of error state
+      if (page) {
+        try {
+          await page.screenshot({ path: '/tmp/critical-error.png', fullPage: true });
+          console.log('📸 Error screenshot saved to /tmp/critical-error.png');
+          const url = page.url();
+          console.log('Page URL at time of error:', url);
+        } catch (err) {
+          console.log('Could not save error screenshot:', err);
+        }
+      }
+      
+      onStatusUpdate('failed', `Error: ${error.message}`);
       return { success: false, requiresCaptcha: false, error: error.message };
     } finally {
       if (page) {
+        console.log('🧹 Closing browser page...');
         await page.close().catch(err => console.error('Error closing page:', err));
+        console.log('✓ Page closed');
       }
-      console.log(`Finished processing ${friend.username}\n`);
+      console.log(`✅ Finished processing ${friend.username}\n`);
     }
   }
 
