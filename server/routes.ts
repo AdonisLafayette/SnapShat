@@ -28,10 +28,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // VNC WebSocket proxy server
-  const vncWss = new WebSocketServer({ server: httpServer, path: '/vnc' });
+  const vncWss = new WebSocketServer({ 
+    server: httpServer, 
+    path: '/vnc',
+    handleProtocols: (protocols, request) => {
+      // Accept binary subprotocol for noVNC compatibility
+      if (protocols.includes('binary')) {
+        return 'binary';
+      }
+      return false;
+    }
+  });
   
-  vncWss.on('connection', (clientWs) => {
-    console.log('[VNC Proxy] Client connected');
+  vncWss.on('connection', (clientWs, request) => {
+    console.log('[VNC Proxy] Client connected with protocol:', clientWs.protocol);
+    
+    // Configure WebSocket for binary frames
+    clientWs.binaryType = 'arraybuffer';
     
     if (!vncManager.getIsRunning()) {
       console.error('[VNC Proxy] VNC server not running');
@@ -44,41 +57,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const vncSocket = new net.Socket();
     const vncPort = vncManager.getVNCPort();
 
+    // Keepalive ping interval
+    const pingInterval = setInterval(() => {
+      if (clientWs.readyState === WebSocket.OPEN) {
+        clientWs.ping();
+      }
+    }, 30000); // Ping every 30 seconds
+
     vncSocket.connect(vncPort, 'localhost', () => {
       console.log('[VNC Proxy] Connected to VNC server');
     });
 
-    // Forward data from VNC server to client
+    // Forward data from VNC server to client (binary frames)
     vncSocket.on('data', (data: Buffer) => {
       if (clientWs.readyState === WebSocket.OPEN) {
-        clientWs.send(data);
+        clientWs.send(data, { binary: true });
       }
     });
 
-    // Forward data from client to VNC server
-    clientWs.on('message', (data) => {
-      vncSocket.write(data as Buffer);
+    // Forward data from client to VNC server (binary frames)
+    clientWs.on('message', (data: any, isBinary: boolean) => {
+      if (isBinary || Buffer.isBuffer(data) || data instanceof ArrayBuffer) {
+        const buffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
+        vncSocket.write(buffer);
+      }
     });
 
     // Handle disconnections
     vncSocket.on('close', () => {
       console.log('[VNC Proxy] VNC server connection closed');
+      clearInterval(pingInterval);
       clientWs.close();
     });
 
     vncSocket.on('error', (err: Error) => {
       console.error('[VNC Proxy] VNC socket error:', err);
+      clearInterval(pingInterval);
       clientWs.close();
     });
 
     clientWs.on('close', () => {
       console.log('[VNC Proxy] Client disconnected');
+      clearInterval(pingInterval);
       vncSocket.destroy();
     });
 
     clientWs.on('error', (err: Error) => {
       console.error('[VNC Proxy] Client socket error:', err);
+      clearInterval(pingInterval);
       vncSocket.destroy();
+    });
+
+    clientWs.on('pong', () => {
+      console.log('[VNC Proxy] Keepalive pong received');
     });
   });
 

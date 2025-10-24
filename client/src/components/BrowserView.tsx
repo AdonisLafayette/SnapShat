@@ -1,8 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Monitor, AlertCircle } from "lucide-react";
-// @ts-ignore - noVNC doesn't have TypeScript definitions
-import RFB from '@novnc/novnc/lib/rfb.js';
+
+declare global {
+  interface Window {
+    RFB: any;
+  }
+}
 
 interface BrowserViewProps {
   isActive: boolean;
@@ -13,8 +17,48 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [vncUrl, setVncUrl] = useState<string | null>(null);
+  const [noVNCReady, setNoVNCReady] = useState(false);
   const vncContainerRef = useRef<HTMLDivElement>(null);
   const rfbRef = useRef<any>(null);
+
+  // Load noVNC from CDN
+  useEffect(() => {
+    if (typeof window.RFB !== 'undefined') {
+      setNoVNCReady(true);
+      return;
+    }
+
+    // Use unpkg which provides better module resolution
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/@novnc/novnc@1.4.0/lib/rfb.js';
+    script.type = 'module';
+    
+    script.onload = async () => {
+      try {
+        // Dynamically import the module and expose it globally
+        const module = await import('https://unpkg.com/@novnc/novnc@1.4.0/lib/rfb.js');
+        window.RFB = module.default || module.RFB;
+        console.log('[noVNC] Library loaded from CDN, RFB:', typeof window.RFB);
+        setNoVNCReady(true);
+      } catch (err) {
+        console.error('[noVNC] Failed to import module:', err);
+        setError('Failed to load VNC client library');
+      }
+    };
+    
+    script.onerror = () => {
+      console.error('[noVNC] Failed to load library');
+      setError('Failed to load VNC client library');
+    };
+    
+    document.head.appendChild(script);
+
+    return () => {
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
+    };
+  }, []);
 
   // Fetch VNC URL when automation starts
   useEffect(() => {
@@ -44,7 +88,7 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
 
   // Initialize noVNC when URL is available
   useEffect(() => {
-    if (!vncUrl || !vncContainerRef.current || !isActive) {
+    if (!vncUrl || !vncContainerRef.current || !isActive || !noVNCReady || !window.RFB) {
       return;
     }
 
@@ -59,7 +103,7 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
       vncContainerRef.current.innerHTML = '';
 
       // Connect to noVNC - it creates its own canvas elements
-      const rfb = new RFB(vncContainerRef.current, vncUrl, {
+      const rfb = new window.RFB(vncContainerRef.current, vncUrl, {
         credentials: {}
       });
 
@@ -107,7 +151,7 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
         rfbRef.current = null;
       }
     };
-  }, [vncUrl, isActive]);
+  }, [vncUrl, isActive, noVNCReady]);
 
   // Cleanup on unmount or when inactive
   useEffect(() => {
