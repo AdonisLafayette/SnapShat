@@ -123,16 +123,34 @@ export class SnapchatAutomation {
   async detectCaptcha(page: Page): Promise<boolean> {
     try {
       // Check for Cloudflare Turnstile (most common on Snapchat)
-      const hasTurnstile = await page.evaluate(() => {
+      const turnstileStatus = await page.evaluate(() => {
         const turnstileInputs = document.querySelectorAll('input[name="cf-turnstile-response"]');
-        const turnstileIframes = document.querySelectorAll('iframe[src*="cloudflare"]');
-        const challengeElements = document.querySelectorAll('[id*="cf-chl"]');
-        return turnstileInputs.length > 0 || turnstileIframes.length > 0 || challengeElements.length > 0;
+        if (turnstileInputs.length === 0) {
+          return { present: false, solved: false };
+        }
+        
+        // Check if any turnstile input has a non-empty value (means solved)
+        const inputArray = Array.from(turnstileInputs);
+        for (const input of inputArray) {
+          const value = (input as HTMLInputElement).value;
+          if (value && value.length > 10) {
+            // Has a token value, means CAPTCHA is solved
+            return { present: true, solved: true };
+          }
+        }
+        
+        // Turnstile present but no token yet (not solved)
+        return { present: true, solved: false };
       });
 
-      if (hasTurnstile) {
-        console.log('✓ Cloudflare Turnstile CAPTCHA detected');
-        return true;
+      if (turnstileStatus.present) {
+        if (turnstileStatus.solved) {
+          console.log('✓ Cloudflare Turnstile CAPTCHA solved');
+          return false; // Not blocked by CAPTCHA anymore
+        } else {
+          console.log('✓ Cloudflare Turnstile CAPTCHA detected (not solved yet)');
+          return true; // Still blocked by CAPTCHA
+        }
       }
 
       // Check for common captcha indicators

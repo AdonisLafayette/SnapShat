@@ -21,29 +21,32 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
   const vncContainerRef = useRef<HTMLDivElement>(null);
   const rfbRef = useRef<any>(null);
 
-  // Load noVNC from CDN - using vendored UMD build
+  // Load noVNC from local vendored bundle
   useEffect(() => {
     if (typeof window.RFB !== 'undefined') {
+      console.log('[noVNC] Library already loaded');
       setNoVNCReady(true);
       return;
     }
 
-    // Load vendored noVNC library from novnc.com
+    // Load locally vendored noVNC UMD bundle
     const script = document.createElement('script');
-    script.src = 'https://novnc.com/noVNC/include/rfb.js';
+    script.src = '/novnc/rfb.js';
     script.type = 'text/javascript';
     
     script.onload = () => {
-      console.log('[noVNC] Library loaded, RFB available:', typeof window.RFB);
+      console.log('[noVNC] Library loaded from local bundle');
       if (typeof window.RFB !== 'undefined') {
+        console.log('[noVNC] RFB class is available');
         setNoVNCReady(true);
       } else {
+        console.error('[noVNC] RFB class not available after load');
         setError('VNC library loaded but RFB class not available');
       }
     };
     
     script.onerror = () => {
-      console.error('[noVNC] Failed to load library');
+      console.error('[noVNC] Failed to load local bundle');
       setError('Failed to load VNC client library. Please refresh the page.');
     };
     
