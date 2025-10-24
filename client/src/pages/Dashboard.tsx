@@ -26,7 +26,7 @@ interface LogEntry {
 
 export default function Dashboard() {
   const { toast } = useToast();
-  const { lastMessage } = useWebSocket('/ws');
+  const { setMessageHandler } = useWebSocket('/ws');
   
   const [selectedFriends, setSelectedFriends] = useState<Set<string>>(new Set());
   const [isProcessing, setIsProcessing] = useState(false);
@@ -74,12 +74,8 @@ export default function Dashboard() {
     setFriendStatuses(statusMap);
   }, [submissions]);
 
-  // Handle WebSocket messages
+  // Set up WebSocket message handler
   useEffect(() => {
-    if (!lastMessage) return;
-
-    const { type, data } = lastMessage;
-
     const addLogEntry = (entry: Omit<LogEntry, 'id' | 'timestamp'>) => {
       setLogs(prev => [
         {
@@ -91,55 +87,59 @@ export default function Dashboard() {
       ].slice(0, 100));
     };
 
-    switch (type) {
-      case 'status_update':
-        setFriendStatuses(prev => ({
-          ...prev,
-          [data.friendId]: data.status,
-        }));
-        
-        // Look up friend name from ref to avoid dependency on friends array
-        const friend = friendsMapRef.current.get(data.friendId);
-        if (friend) {
-          addLogEntry({
-            friendUsername: friend.username,
-            action: data.message,
-            status: data.status === 'failed' ? 'error' : 
-                   data.status === 'captcha' ? 'warning' :
-                   data.status === 'success' ? 'success' : 'info',
-          });
+    setMessageHandler((message) => {
+      const { type, data } = message;
 
-          if (data.status === 'captcha') {
-            setCaptchaFriend(friend.username);
-            setCaptchaOpen(true);
+      switch (type) {
+        case 'status_update':
+          setFriendStatuses(prev => ({
+            ...prev,
+            [data.friendId]: data.status,
+          }));
+          
+          // Look up friend name from ref to avoid dependency on friends array
+          const friend = friendsMapRef.current.get(data.friendId);
+          if (friend) {
+            addLogEntry({
+              friendUsername: friend.username,
+              action: data.message,
+              status: data.status === 'failed' ? 'error' : 
+                     data.status === 'captcha' ? 'warning' :
+                     data.status === 'success' ? 'success' : 'info',
+            });
+
+            if (data.status === 'captcha') {
+              setCaptchaFriend(friend.username);
+              setCaptchaOpen(true);
+            }
           }
-        }
-        break;
+          break;
 
-      case 'friend_added':
-      case 'friends_imported':
-        queryClient.invalidateQueries({ queryKey: ['/api/friends'] });
-        break;
+        case 'friend_added':
+        case 'friends_imported':
+          queryClient.invalidateQueries({ queryKey: ['/api/friends'] });
+          break;
 
-      case 'processing_stopped':
-        setIsProcessing(false);
-        addLogEntry({
-          friendUsername: 'System',
-          action: 'Batch processing stopped',
-          status: 'warning',
-        });
-        break;
+        case 'processing_stopped':
+          setIsProcessing(false);
+          addLogEntry({
+            friendUsername: 'System',
+            action: 'Batch processing stopped',
+            status: 'warning',
+          });
+          break;
 
-      case 'processing_error':
-        setIsProcessing(false);
-        toast({
-          title: "Processing Error",
-          description: data.error,
-          variant: "destructive",
-        });
-        break;
-    }
-  }, [lastMessage]);
+        case 'processing_error':
+          setIsProcessing(false);
+          toast({
+            title: "Processing Error",
+            description: data.error,
+            variant: "destructive",
+          });
+          break;
+      }
+    });
+  }, [setMessageHandler, toast]);
 
   const filteredFriends = useMemo(() => {
     if (!searchQuery.trim()) return friends;

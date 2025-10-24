@@ -5,12 +5,17 @@ interface WebSocketMessage {
   data: any;
 }
 
+type MessageHandler = (message: WebSocketMessage) => void;
+
 export function useWebSocket(url: string) {
   const [isConnected, setIsConnected] = useState(false);
-  const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
-  const messageIdRef = useRef<number>(0);
+  const messageHandlerRef = useRef<MessageHandler | null>(null);
+
+  const setMessageHandler = useCallback((handler: MessageHandler) => {
+    messageHandlerRef.current = handler;
+  }, []);
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -31,8 +36,10 @@ export function useWebSocket(url: string) {
         ws.onmessage = (event) => {
           try {
             const message = JSON.parse(event.data);
-            // Use callback form to avoid stale closures
-            setLastMessage(message);
+            // Call the handler directly without state updates
+            if (messageHandlerRef.current) {
+              messageHandlerRef.current(message);
+            }
           } catch (error) {
             console.error('Failed to parse WebSocket message:', error);
           }
@@ -71,5 +78,5 @@ export function useWebSocket(url: string) {
     };
   }, [url]);
 
-  return { isConnected, lastMessage };
+  return { isConnected, setMessageHandler };
 }
