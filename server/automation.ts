@@ -29,14 +29,9 @@ export class SnapchatAutomation {
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
-          '--disable-web-security',
-          '--start-maximized',
           '--disable-blink-features=AutomationControlled',
-          '--disable-gpu',
-          '--disable-software-rasterizer',
-          '--single-process',
         ],
-        defaultViewport: null,
+        defaultViewport: { width: 1280, height: 800 },
       });
       
       console.log('✓ Browser initialized successfully with Chromium');
@@ -310,12 +305,13 @@ export class SnapchatAutomation {
       await this.initialize();
     }
 
-    const page = await this.browser!.newPage();
-    
-    // Wait for page to be ready before doing anything
-    await delay(500);
+    let page: Page | null = null;
     
     try {
+      page = await this.browser!.newPage();
+      
+      // Wait for page to be ready before doing anything
+      await delay(500);
       console.log(`\n🔄 Processing ${friend.username}...`);
       onStatusUpdate('running', `Loading Snapchat ticket page for ${friend.username}`);
       
@@ -418,8 +414,9 @@ export class SnapchatAutomation {
       console.error('❌ Error processing friend:', error);
       return { success: false, requiresCaptcha: false, error: error.message };
     } finally {
-      // Keep page open if there was an error for debugging
-      // await page.close();
+      if (page) {
+        await page.close().catch(err => console.error('Error closing page:', err));
+      }
       console.log(`Finished processing ${friend.username}\n`);
     }
   }
@@ -428,65 +425,67 @@ export class SnapchatAutomation {
     this.isProcessing = true;
     this.shouldStop = false;
 
-    await this.initialize();
+    try {
+      await this.initialize();
 
-    for (const friendId of friendIds) {
-      if (this.shouldStop) {
-        console.log('Batch processing stopped by user');
-        break;
-      }
+      for (const friendId of friendIds) {
+        if (this.shouldStop) {
+          console.log('Batch processing stopped by user');
+          break;
+        }
 
-      const friend = await storage.getFriend(friendId);
-      if (!friend) {
-        console.log('Friend not found:', friendId);
-        continue;
-      }
+        const friend = await storage.getFriend(friendId);
+        if (!friend) {
+          console.log('Friend not found:', friendId);
+          continue;
+        }
 
-      // Create or update submission record
-      let submission = await storage.getSubmissionByFriendId(friendId);
-      if (!submission) {
-        submission = await storage.createSubmission({
-          friendId,
-          status: 'pending',
-          startedAt: null,
-          completedAt: null,
-          errorMessage: null,
-          logEntries: null,
-        });
-      }
+        // Create or update submission record
+        let submission = await storage.getSubmissionByFriendId(friendId);
+        if (!submission) {
+          submission = await storage.createSubmission({
+            friendId,
+            status: 'pending',
+            startedAt: null,
+            completedAt: null,
+            errorMessage: null,
+            logEntries: null,
+          });
+        }
 
-      await storage.updateSubmission(submission.id, {
-        status: 'running',
-        startedAt: new Date(),
-      });
-
-      const result = await this.processOneFriend(friend, (status, message) => {
-        onStatusUpdate(friendId, status, message);
-      });
-
-      if (result.success) {
         await storage.updateSubmission(submission.id, {
-          status: 'success',
-          completedAt: new Date(),
+          status: 'running',
+          startedAt: new Date(),
         });
-      } else if (result.requiresCaptcha) {
-        await storage.updateSubmission(submission.id, {
-          status: 'captcha',
-          errorMessage: result.error,
-        });
-      } else {
-        await storage.updateSubmission(submission.id, {
-          status: 'failed',
-          completedAt: new Date(),
-          errorMessage: result.error,
-        });
-      }
 
-      // Wait between requests to avoid rate limiting (random delay to appear more human)
-      await new Promise(resolve => setTimeout(resolve, 3000 + Math.random() * 2000));
+        const result = await this.processOneFriend(friend, (status, message) => {
+          onStatusUpdate(friendId, status, message);
+        });
+
+        if (result.success) {
+          await storage.updateSubmission(submission.id, {
+            status: 'success',
+            completedAt: new Date(),
+          });
+        } else if (result.requiresCaptcha) {
+          await storage.updateSubmission(submission.id, {
+            status: 'captcha',
+            errorMessage: result.error,
+          });
+        } else {
+          await storage.updateSubmission(submission.id, {
+            status: 'failed',
+            completedAt: new Date(),
+            errorMessage: result.error,
+          });
+        }
+
+        // Wait between requests to avoid rate limiting (random delay to appear more human)
+        await new Promise(resolve => setTimeout(resolve, 3000 + Math.random() * 2000));
+      }
+    } finally {
+      this.isProcessing = false;
     }
-
-    this.isProcessing = false;
   }
 
   stopProcessing() {

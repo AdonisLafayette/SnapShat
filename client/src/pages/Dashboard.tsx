@@ -139,8 +139,7 @@ export default function Dashboard() {
           break;
       }
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setMessageHandler]);
+  }, [setMessageHandler, toast]);
 
   const filteredFriends = useMemo(() => {
     if (!searchQuery.trim()) return friends;
