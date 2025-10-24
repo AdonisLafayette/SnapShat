@@ -19,22 +19,37 @@ export class SnapchatAutomation {
 
   async initialize() {
     if (!this.browser) {
-      // Use system Chromium (installed via Nix)
-      const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium';
-      
-      this.browser = await puppeteer.launch({
-        headless: false, // Show browser for captcha solving
-        executablePath,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-blink-features=AutomationControlled',
-        ],
-        defaultViewport: { width: 1280, height: 800 },
-      });
-      
-      console.log('✓ Browser initialized successfully with Chromium');
+      try {
+        // Use system Chromium (installed via Nix)
+        const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium';
+        
+        console.log('🚀 Launching browser with executablePath:', executablePath);
+        
+        this.browser = await puppeteer.launch({
+          headless: false, // Show browser for captcha solving
+          executablePath,
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-blink-features=AutomationControlled',
+            '--disable-web-security',
+            '--disable-features=IsolateOrigins,site-per-process',
+          ],
+          defaultViewport: { width: 1280, height: 800 },
+        });
+        
+        console.log('✓ Browser initialized successfully');
+        
+        // Test browser is working by creating and closing a test page
+        const testPage = await this.browser.newPage();
+        await testPage.close();
+        console.log('✓ Browser test page creation successful');
+      } catch (error: any) {
+        console.error('❌ Failed to initialize browser:', error.message);
+        this.browser = null;
+        throw new Error(`Browser initialization failed: ${error.message}`);
+      }
     }
   }
 
@@ -102,17 +117,33 @@ export class SnapchatAutomation {
       const captchaSelectors = [
         'iframe[src*="recaptcha"]',
         'iframe[src*="captcha"]',
+        'iframe[src*="hcaptcha"]',
         '.g-recaptcha',
         '#recaptcha',
         '[class*="captcha"]',
+        '[id*="captcha"]',
+        'div[data-sitekey]', // reCAPTCHA element
       ];
 
       for (const selector of captchaSelectors) {
         const element = await page.$(selector);
         if (element) {
-          console.log('CAPTCHA detected:', selector);
+          console.log('✓ CAPTCHA detected with selector:', selector);
           return true;
         }
+      }
+
+      // Also check for captcha in page content
+      const hasCaptchaText = await page.evaluate(() => {
+        const bodyText = document.body.innerText.toLowerCase();
+        return bodyText.includes('captcha') || 
+               bodyText.includes('verify you are human') ||
+               bodyText.includes('prove you are not a robot');
+      });
+
+      if (hasCaptchaText) {
+        console.log('✓ CAPTCHA detected from page text');
+        return true;
       }
 
       return false;
@@ -255,23 +286,77 @@ export class SnapchatAutomation {
       'button[type="submit"]',
       'input[name="commit"]',
       'button[name="commit"]',
+      'button:has-text("Submit")',
+      'button:has-text("Send")',
+      'input[value*="Submit"]',
+      'input[value*="Send"]',
     ];
 
+    console.log('🔍 Looking for submit button...');
+    
+    // First, try to find using selectors
     for (const selector of submitSelectors) {
       try {
+        await page.waitForSelector(selector, { timeout: 2000 }).catch(() => null);
         const button = await page.$(selector);
         if (button) {
-          console.log('Clicking submit button:', selector);
-          await button.click();
-          await delay(1000);
-          return true;
+          const isVisible = await button.evaluate(el => {
+            const style = window.getComputedStyle(el);
+            return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+          });
+          
+          if (isVisible) {
+            console.log('✓ Found submit button with selector:', selector);
+            await button.click({ delay: 100 });
+            console.log('✓ Submit button clicked successfully');
+            await delay(2000); // Wait for submission
+            return true;
+          }
         }
       } catch (error) {
-        console.log(`Submit selector ${selector} failed:`, error);
+        console.log(`⚠ Submit selector ${selector} failed:`, error);
       }
     }
 
-    console.error('Could not find submit button');
+    // If selectors fail, try to find by evaluating all buttons
+    console.log('🔍 Trying to find submit button by evaluating all buttons...');
+    try {
+      const buttonFound = await page.evaluate(() => {
+        const buttons = Array.from(document.querySelectorAll('button, input[type="submit"], input[type="button"]'));
+        for (const btn of buttons) {
+          const text = btn.textContent?.toLowerCase() || '';
+          const value = (btn as HTMLInputElement).value?.toLowerCase() || '';
+          const type = (btn as HTMLInputElement).type || '';
+          
+          if (text.includes('submit') || text.includes('send') || 
+              value.includes('submit') || value.includes('send') ||
+              type === 'submit') {
+            (btn as HTMLElement).click();
+            return true;
+          }
+        }
+        return false;
+      });
+
+      if (buttonFound) {
+        console.log('✓ Submit button clicked via evaluation');
+        await delay(2000);
+        return true;
+      }
+    } catch (error) {
+      console.log('⚠ Button evaluation failed:', error);
+    }
+
+    console.error('❌ Could not find submit button with any method');
+    
+    // Take screenshot for debugging
+    try {
+      await page.screenshot({ path: '/tmp/submit-button-not-found.png', fullPage: true });
+      console.log('📸 Screenshot saved to /tmp/submit-button-not-found.png');
+    } catch (err) {
+      console.log('Could not save screenshot:', err);
+    }
+    
     return false;
   }
 
@@ -362,9 +447,13 @@ export class SnapchatAutomation {
       const formFilled = await this.fillForm(page, friend);
       if (!formFilled) {
         console.error('❌ Failed to fill form fields');
-        // Save page HTML for debugging
-        const html = await page.content();
-        console.log('Page HTML length:', html.length);
+        // Take screenshot for debugging
+        try {
+          await page.screenshot({ path: '/tmp/form-fill-failed.png', fullPage: true });
+          console.log('📸 Screenshot saved to /tmp/form-fill-failed.png');
+        } catch (err) {
+          console.log('Could not save screenshot:', err);
+        }
         return { success: false, requiresCaptcha: false, error: 'Failed to fill form fields' };
       }
 
@@ -386,6 +475,15 @@ export class SnapchatAutomation {
       // Submit form
       console.log('📤 Submitting form...');
       onStatusUpdate('running', `Submitting form for ${friend.username}`);
+      
+      // Take screenshot before submission
+      try {
+        await page.screenshot({ path: '/tmp/before-submit.png', fullPage: true });
+        console.log('📸 Before-submit screenshot saved to /tmp/before-submit.png');
+      } catch (err) {
+        console.log('Could not save before-submit screenshot:', err);
+      }
+      
       const submitted = await this.submitForm(page);
       if (!submitted) {
         console.error('❌ Failed to find/click submit button');
@@ -393,6 +491,7 @@ export class SnapchatAutomation {
       }
 
       console.log('✓ Submit button clicked, waiting for success page...');
+      onStatusUpdate('running', `Waiting for confirmation for ${friend.username}`);
 
       // Wait for success
       const success = await this.waitForSuccess(page, 120000); // 2 minutes
@@ -400,13 +499,31 @@ export class SnapchatAutomation {
         console.log('✅ Success page detected!');
         await this.saveCookies(page);
         onStatusUpdate('success', `Successfully submitted restoration request for ${friend.username}`);
+        
+        // Take success screenshot
+        try {
+          await page.screenshot({ path: '/tmp/success-page.png', fullPage: true });
+          console.log('📸 Success screenshot saved to /tmp/success-page.png');
+        } catch (err) {
+          console.log('Could not save success screenshot:', err);
+        }
+        
         return { success: true, requiresCaptcha: false };
       } else {
         console.error('❌ Success page not detected');
         const currentUrl = page.url();
         const pageText = await page.evaluate(() => document.body.textContent?.substring(0, 500));
         console.log('Current URL:', currentUrl);
-        console.log('Page text:', pageText);
+        console.log('Page text preview:', pageText);
+        
+        // Take screenshot of failure
+        try {
+          await page.screenshot({ path: '/tmp/success-not-found.png', fullPage: true });
+          console.log('📸 Screenshot saved to /tmp/success-not-found.png');
+        } catch (err) {
+          console.log('Could not save screenshot:', err);
+        }
+        
         return { success: false, requiresCaptcha: false, error: 'Success page not detected' };
       }
 
