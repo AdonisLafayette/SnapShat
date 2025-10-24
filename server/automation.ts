@@ -189,54 +189,61 @@ export class SnapchatAutomation {
     return false;
   }
 
-  async fillField(page: Page, selectors: string[], value: string, fieldName: string): Promise<boolean> {
-    for (const selector of selectors) {
-      try {
-        await page.waitForSelector(selector, { timeout: 5000 }).catch(() => null);
-        const element = await page.$(selector);
-        if (element) {
-          console.log(`✓ Found ${fieldName} using selector: ${selector}`);
-          
-          // Human-like interaction
-          await element.click({ delay: 100 });
-          await delay(150 + Math.random() * 100);
-          
-          // Clear existing value
-          await element.evaluate((el: any) => {
-            if (el.value !== undefined) el.value = '';
-            if (el.getAttribute && el.getAttribute('contenteditable') === 'true') {
-              el.innerText = '';
+  async fillField(page: Page, selectors: string[], value: string, fieldName: string, retries = 3): Promise<boolean> {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      for (const selector of selectors) {
+        try {
+          await page.waitForSelector(selector, { timeout: 5000 }).catch(() => null);
+          const element = await page.$(selector);
+          if (element) {
+            console.log(`✓ Found ${fieldName} using selector: ${selector} (attempt ${attempt}/${retries})`);
+            
+            // Human-like interaction
+            await element.click({ delay: 100 });
+            await delay(150 + Math.random() * 100);
+            
+            // Clear existing value
+            await element.evaluate((el: any) => {
+              if (el.value !== undefined) el.value = '';
+              if (el.getAttribute && el.getAttribute('contenteditable') === 'true') {
+                el.innerText = '';
+              }
+            });
+            
+            // Type with random human-like delays
+            for (const char of value) {
+              await element.type(char, { delay: 50 + Math.random() * 50 });
             }
-          });
-          
-          // Type with random human-like delays
-          for (const char of value) {
-            await element.type(char, { delay: 50 + Math.random() * 50 });
-          }
-          
-          // Trigger events
-          await element.evaluate((el: any, val: string) => {
-            if (el.getAttribute && el.getAttribute('contenteditable') === 'true') {
-              el.focus();
-              el.innerText = val;
-            } else {
-              el.focus();
-              el.value = val;
-            }
-            el.dispatchEvent(new Event('input', { bubbles: true }));
-            el.dispatchEvent(new Event('change', { bubbles: true }));
-            el.dispatchEvent(new Event('blur', { bubbles: true }));
-          }, value);
+            
+            // Trigger events
+            await element.evaluate((el: any, val: string) => {
+              if (el.getAttribute && el.getAttribute('contenteditable') === 'true') {
+                el.focus();
+                el.innerText = val;
+              } else {
+                el.focus();
+                el.value = val;
+              }
+              el.dispatchEvent(new Event('input', { bubbles: true }));
+              el.dispatchEvent(new Event('change', { bubbles: true }));
+              el.dispatchEvent(new Event('blur', { bubbles: true }));
+            }, value);
 
-          await delay(300 + Math.random() * 200);
-          return true;
+            await delay(300 + Math.random() * 200);
+            return true;
+          }
+        } catch (error) {
+          console.log(`⚠ Selector ${selector} failed for ${fieldName} (attempt ${attempt}/${retries}):`, error);
         }
-      } catch (error) {
-        console.log(`⚠ Selector ${selector} failed for ${fieldName}:`, error);
+      }
+      
+      if (attempt < retries) {
+        console.log(`⏳ Retrying to find ${fieldName} after ${attempt} failed attempt(s)...`);
+        await delay(1000); // Wait before retry
       }
     }
 
-    console.error(`❌ Could not find field: ${fieldName}`);
+    console.error(`❌ Could not find field: ${fieldName} after ${retries} attempts`);
     return false;
   }
 
@@ -458,20 +465,81 @@ export class SnapchatAutomation {
       const hasCaptcha = await this.detectCaptcha(page);
       if (hasCaptcha) {
         console.log('⚠️ CAPTCHA detected before form filling');
+        console.log('📸 Taking screenshot of CAPTCHA page...');
+        try {
+          await page.screenshot({ path: '/tmp/captcha-detected.png', fullPage: true });
+          console.log('Screenshot saved to /tmp/captcha-detected.png');
+        } catch (err) {
+          console.log('Could not save screenshot:', err);
+        }
+        
         onStatusUpdate('captcha', `CAPTCHA detected for ${friend.username} - please solve it in the browser window`);
+        
+        // Keep checking screenshots every 2 seconds so the user can monitor progress
+        const captchaCheckInterval = setInterval(async () => {
+          try {
+            if (page) {
+              await page.screenshot({ path: '/tmp/current-page.png', fullPage: false });
+            }
+          } catch (err) {
+            // Ignore errors during periodic screenshots
+          }
+        }, 2000);
+        
         const solved = await this.waitForCaptchaSolve(page, 300000); // 5 minutes
+        clearInterval(captchaCheckInterval);
+        
         if (!solved) {
           return { success: false, requiresCaptcha: true, error: 'CAPTCHA not solved within timeout' };
         }
+        
         console.log('✓ CAPTCHA solved, proceeding with form');
-        // Reload page after CAPTCHA to ensure clean state
-        await page.goto(TICKET_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
-        await delay(3000); // Extra wait for dynamic content to load
+        console.log('⏳ Waiting for form to load after CAPTCHA solve...');
+        
+        // Don't reload - just wait longer for the form to appear after CAPTCHA is solved
+        await delay(5000); // Give extra time for form to load
+        
+        // Verify form fields are actually present now
+        const formPresent = await page.evaluate(() => {
+          const inputs = document.querySelectorAll('input[name^="request[custom_fields]"]');
+          return inputs.length > 0;
+        });
+        
+        if (!formPresent) {
+          console.log('⚠️ Form not loaded after CAPTCHA, reloading page...');
+          await page.goto(TICKET_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
+          await delay(3000);
+        } else {
+          console.log('✓ Form fields detected after CAPTCHA solve');
+        }
       }
 
-      // Fill form
+      // Fill form with retry logic
       console.log('📝 Filling form fields...');
       onStatusUpdate('running', `Filling form fields for ${friend.username}`);
+      
+      // Wait for at least one form field to be visible before attempting to fill
+      console.log('⏳ Waiting for form fields to be ready...');
+      const formFieldsReady = await page.waitForFunction(
+        () => {
+          const formInputs = document.querySelectorAll('input[name^="request[custom_fields]"]');
+          return formInputs.length > 0;
+        },
+        { timeout: 30000 }
+      ).catch(() => null);
+      
+      if (!formFieldsReady) {
+        console.error('❌ Form fields never appeared');
+        try {
+          await page.screenshot({ path: '/tmp/form-not-loaded.png', fullPage: true });
+          console.log('📸 Screenshot saved to /tmp/form-not-loaded.png');
+        } catch (err) {
+          console.log('Could not save screenshot:', err);
+        }
+        return { success: false, requiresCaptcha: false, error: 'Form fields did not load' };
+      }
+      
+      console.log('✓ Form fields are ready, proceeding to fill...');
       const formFilled = await this.fillForm(page, friend);
       if (!formFilled) {
         console.error('❌ Failed to fill form fields');
