@@ -1,12 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Monitor, AlertCircle } from "lucide-react";
-
-declare global {
-  interface Window {
-    RFB: any;
-  }
-}
+import RFB from 'novnc-core';
 
 interface BrowserViewProps {
   isActive: boolean;
@@ -17,47 +12,8 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [vncUrl, setVncUrl] = useState<string | null>(null);
-  const [noVNCReady, setNoVNCReady] = useState(false);
   const vncContainerRef = useRef<HTMLDivElement>(null);
   const rfbRef = useRef<any>(null);
-
-  // Load noVNC from local vendored bundle
-  useEffect(() => {
-    if (typeof window.RFB !== 'undefined') {
-      console.log('[noVNC] Library already loaded');
-      setNoVNCReady(true);
-      return;
-    }
-
-    // Load locally vendored noVNC UMD bundle
-    const script = document.createElement('script');
-    script.src = '/novnc/rfb.js';
-    script.type = 'text/javascript';
-    
-    script.onload = () => {
-      console.log('[noVNC] Library loaded from local bundle');
-      if (typeof window.RFB !== 'undefined') {
-        console.log('[noVNC] RFB class is available');
-        setNoVNCReady(true);
-      } else {
-        console.error('[noVNC] RFB class not available after load');
-        setError('VNC library loaded but RFB class not available');
-      }
-    };
-    
-    script.onerror = () => {
-      console.error('[noVNC] Failed to load local bundle');
-      setError('Failed to load VNC client library. Please refresh the page.');
-    };
-    
-    document.head.appendChild(script);
-
-    return () => {
-      if (document.head.contains(script)) {
-        document.head.removeChild(script);
-      }
-    };
-  }, []);
 
   // Fetch VNC URL when automation starts
   useEffect(() => {
@@ -70,7 +26,9 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
         const response = await fetch('/api/process/vnc-url');
         if (response.ok) {
           const data = await response.json();
+          console.log('[VNC] Received VNC URL:', data.url);
           setVncUrl(data.url);
+          setError(null);
         } else {
           setError('VNC server not available yet...');
           // Retry after 2 seconds
@@ -79,6 +37,8 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
       } catch (err) {
         console.error('Error fetching VNC URL:', err);
         setError('Failed to connect to browser');
+        // Retry on error
+        setTimeout(fetchVncUrl, 2000);
       }
     };
 
@@ -87,13 +47,16 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
 
   // Initialize noVNC when URL is available
   useEffect(() => {
-    if (!vncUrl || !vncContainerRef.current || !isActive || !noVNCReady || !window.RFB) {
+    if (!vncUrl || !vncContainerRef.current || !isActive) {
       return;
     }
+
+    console.log('[noVNC] Initializing connection to:', vncUrl);
 
     try {
       // Clear any existing connection
       if (rfbRef.current) {
+        console.log('[noVNC] Disconnecting existing connection');
         rfbRef.current.disconnect();
         rfbRef.current = null;
       }
@@ -102,13 +65,13 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
       vncContainerRef.current.innerHTML = '';
 
       // Connect to noVNC - it creates its own canvas elements
-      const rfb = new window.RFB(vncContainerRef.current, vncUrl, {
+      const rfb = new RFB(vncContainerRef.current, vncUrl, {
         credentials: {}
       });
 
       // Set up event handlers
       rfb.addEventListener('connect', () => {
-        console.log('[noVNC] Connected');
+        console.log('[noVNC] Connected successfully');
         setIsConnected(true);
         setError(null);
       });
@@ -117,7 +80,7 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
         console.log('[noVNC] Disconnected:', e.detail.clean ? 'clean' : 'unclean');
         setIsConnected(false);
         if (!e.detail.clean) {
-          setError('Connection lost');
+          setError('Connection lost - retrying...');
         }
       });
 
@@ -138,6 +101,7 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
       rfb.viewOnly = false; // Allow interaction
 
       rfbRef.current = rfb;
+      console.log('[noVNC] RFB instance created and configured');
 
     } catch (err: any) {
       console.error('[noVNC] Error initializing:', err);
@@ -146,11 +110,12 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
 
     return () => {
       if (rfbRef.current) {
+        console.log('[noVNC] Cleaning up connection');
         rfbRef.current.disconnect();
         rfbRef.current = null;
       }
     };
-  }, [vncUrl, isActive, noVNCReady]);
+  }, [vncUrl, isActive]);
 
   // Cleanup on unmount or when inactive
   useEffect(() => {
@@ -204,7 +169,9 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
               <div className="space-y-2">
                 <AlertCircle className="h-8 w-8 text-yellow-500 mx-auto" />
                 <p className="text-gray-400">{error}</p>
-                <p className="text-sm text-gray-500">Waiting for VNC server to start...</p>
+                {error.includes('not available yet') && (
+                  <p className="text-sm text-gray-500">The browser is starting up...</p>
+                )}
               </div>
             </div>
           ) : !vncUrl ? (
