@@ -58,7 +58,8 @@ export class SnapchatAutomation {
         return false;
       }
 
-      await page.goto(TICKET_URL, { waitUntil: 'networkidle2', timeout: 60000 });
+      await page.goto(TICKET_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      await delay(1000);
       
       let added = 0;
       for (const cookie of cookies) {
@@ -80,7 +81,8 @@ export class SnapchatAutomation {
         }
       }
 
-      await page.reload({ waitUntil: 'networkidle2', timeout: 60000 });
+      await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
+      await delay(2000);
       console.log(`🗝️ Cookies loaded; ${added}/${cookies.length} applied; attempting bypass.`);
       return true;
     } catch (error) {
@@ -310,6 +312,9 @@ export class SnapchatAutomation {
 
     const page = await this.browser!.newPage();
     
+    // Wait for page to be ready before doing anything
+    await delay(500);
+    
     try {
       console.log(`\n🔄 Processing ${friend.username}...`);
       onStatusUpdate('running', `Loading Snapchat ticket page for ${friend.username}`);
@@ -319,7 +324,8 @@ export class SnapchatAutomation {
       
       if (!cookiesLoaded) {
         console.log('No cookies loaded, navigating to ticket page...');
-        await page.goto(TICKET_URL, { waitUntil: 'networkidle2', timeout: 60000 });
+        await page.goto(TICKET_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await delay(2000); // Wait for page to fully load
       }
 
       console.log('Page loaded, waiting for form elements...');
@@ -350,8 +356,8 @@ export class SnapchatAutomation {
         }
         console.log('✓ CAPTCHA solved, proceeding with form');
         // Reload page after CAPTCHA to ensure clean state
-        await page.goto(TICKET_URL, { waitUntil: 'networkidle2', timeout: 60000 });
-        await delay(2000);
+        await page.goto(TICKET_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await delay(3000); // Extra wait for dynamic content to load
       }
 
       // Fill form
