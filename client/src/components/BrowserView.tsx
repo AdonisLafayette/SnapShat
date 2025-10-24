@@ -28,27 +28,19 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
       return;
     }
 
-    // Use unpkg which provides better module resolution
+    // Load noVNC UMD build (works better than ES modules in this context)
     const script = document.createElement('script');
-    script.src = 'https://unpkg.com/@novnc/novnc@1.4.0/lib/rfb.js';
-    script.type = 'module';
+    script.src = 'https://cdn.jsdelivr.net/npm/@novnc/novnc@1.4.0/core/rfb.js';
+    script.type = 'text/javascript';
     
-    script.onload = async () => {
-      try {
-        // Dynamically import the module and expose it globally
-        const module = await import('https://unpkg.com/@novnc/novnc@1.4.0/lib/rfb.js');
-        window.RFB = module.default || module.RFB;
-        console.log('[noVNC] Library loaded from CDN, RFB:', typeof window.RFB);
-        setNoVNCReady(true);
-      } catch (err) {
-        console.error('[noVNC] Failed to import module:', err);
-        setError('Failed to load VNC client library');
-      }
+    script.onload = () => {
+      console.log('[noVNC] Library loaded, RFB available:', typeof window.RFB);
+      setNoVNCReady(true);
     };
     
     script.onerror = () => {
-      console.error('[noVNC] Failed to load library');
-      setError('Failed to load VNC client library');
+      console.error('[noVNC] Failed to load library from CDN');
+      setError('Failed to load VNC client library. Please refresh the page.');
     };
     
     document.head.appendChild(script);
