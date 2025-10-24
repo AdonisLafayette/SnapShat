@@ -1,10 +1,8 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { RefreshCw, Send, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Loader2, Monitor, AlertCircle } from "lucide-react";
+// @ts-ignore - noVNC doesn't have TypeScript definitions
+import RFB from '@novnc/novnc/lib/rfb.js';
 
 interface BrowserViewProps {
   isActive: boolean;
@@ -12,80 +10,123 @@ interface BrowserViewProps {
 }
 
 export default function BrowserView({ isActive, currentFriend }: BrowserViewProps) {
-  const { toast } = useToast();
-  const [screenshot, setScreenshot] = useState<string | null>(null);
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [isConnected, setIsConnected] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [vncUrl, setVncUrl] = useState<string | null>(null);
+  const vncContainerRef = useRef<HTMLDivElement>(null);
+  const rfbRef = useRef<any>(null);
 
-  // Fetch screenshot periodically when active
+  // Fetch VNC URL when automation starts
   useEffect(() => {
     if (!isActive) {
-      setScreenshot(null);
       return;
     }
 
-    const fetchScreenshot = async () => {
+    const fetchVncUrl = async () => {
       try {
-        const response = await fetch('/api/process/screenshot');
+        const response = await fetch('/api/process/vnc-url');
         if (response.ok) {
           const data = await response.json();
-          setScreenshot(data.screenshot);
-          setLastUpdate(new Date());
+          setVncUrl(data.url);
+        } else {
+          setError('VNC server not available yet...');
+          // Retry after 2 seconds
+          setTimeout(fetchVncUrl, 2000);
         }
-      } catch (error) {
-        console.error('Error fetching screenshot:', error);
+      } catch (err) {
+        console.error('Error fetching VNC URL:', err);
+        setError('Failed to connect to browser');
       }
     };
 
-    // Initial fetch
-    fetchScreenshot();
-
-    // Fetch every 2 seconds while active
-    const interval = setInterval(fetchScreenshot, 2000);
-
-    return () => clearInterval(interval);
+    fetchVncUrl();
   }, [isActive]);
 
-  const refreshMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest('POST', '/api/process/manual-refresh');
-      return await res.json();
-    },
-    onSuccess: (data: { success: boolean }) => {
-      if (data.success) {
-        toast({
-          title: "Page refreshed",
-          description: "The browser page has been reloaded",
-        });
-      } else {
-        toast({
-          title: "Refresh failed",
-          description: "Could not refresh the page",
-          variant: "destructive",
-        });
-      }
-    },
-  });
+  // Initialize noVNC when URL is available
+  useEffect(() => {
+    if (!vncUrl || !vncContainerRef.current || !isActive) {
+      return;
+    }
 
-  const submitMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest('POST', '/api/process/manual-submit');
-      return await res.json();
-    },
-    onSuccess: (data: { success: boolean }) => {
-      if (data.success) {
-        toast({
-          title: "Form submitted",
-          description: "The submit button was clicked successfully",
-        });
-      } else {
-        toast({
-          title: "Submit failed",
-          description: "Could not find or click the submit button",
-          variant: "destructive",
-        });
+    try {
+      // Clear any existing connection
+      if (rfbRef.current) {
+        rfbRef.current.disconnect();
+        rfbRef.current = null;
       }
-    },
-  });
+
+      // Clear container
+      vncContainerRef.current.innerHTML = '';
+
+      // Create canvas element
+      const canvas = document.createElement('canvas');
+      canvas.style.width = '100%';
+      canvas.style.height = 'auto';
+      vncContainerRef.current.appendChild(canvas);
+
+      // Connect to noVNC
+      const rfb = new RFB(canvas, vncUrl, {
+        credentials: {}
+      });
+
+      // Set up event handlers
+      rfb.addEventListener('connect', () => {
+        console.log('[noVNC] Connected');
+        setIsConnected(true);
+        setError(null);
+      });
+
+      rfb.addEventListener('disconnect', (e: any) => {
+        console.log('[noVNC] Disconnected:', e.detail.clean ? 'clean' : 'unclean');
+        setIsConnected(false);
+        if (!e.detail.clean) {
+          setError('Connection lost');
+        }
+      });
+
+      rfb.addEventListener('credentialsrequired', () => {
+        console.log('[noVNC] Credentials required');
+        setError('Authentication required');
+      });
+
+      rfb.addEventListener('securityfailure', (e: any) => {
+        console.error('[noVNC] Security failure:', e.detail);
+        setError('Security failure');
+      });
+
+      // Configure RFB
+      rfb.scaleViewport = true;
+      rfb.resizeSession = false;
+      rfb.showDotCursor = true;
+      rfb.viewOnly = false; // Allow interaction
+
+      rfbRef.current = rfb;
+
+    } catch (err: any) {
+      console.error('[noVNC] Error initializing:', err);
+      setError(err.message || 'Failed to initialize VNC');
+    }
+
+    return () => {
+      if (rfbRef.current) {
+        rfbRef.current.disconnect();
+        rfbRef.current = null;
+      }
+    };
+  }, [vncUrl, isActive]);
+
+  // Cleanup on unmount or when inactive
+  useEffect(() => {
+    if (!isActive) {
+      setIsConnected(false);
+      setError(null);
+      setVncUrl(null);
+      if (rfbRef.current) {
+        rfbRef.current.disconnect();
+        rfbRef.current = null;
+      }
+    }
+  }, [isActive]);
 
   if (!isActive || !currentFriend) {
     return null;
@@ -95,76 +136,75 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
     <Card className="bg-white/5 backdrop-blur-md border-white/10" data-testid="browser-view-card">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>Live Browser View</span>
+          <span className="flex items-center gap-2">
+            <Monitor className="h-5 w-5" />
+            Interactive Browser View
+          </span>
           {isActive && (
             <span className="flex items-center gap-2 text-sm font-normal text-blue-400">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              Processing {currentFriend.username}
+              {isConnected ? (
+                <>
+                  <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
+                  Live - Processing {currentFriend.username}
+                </>
+              ) : (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Connecting...
+                </>
+              )}
             </span>
           )}
         </CardTitle>
         <CardDescription>
-          Watch the automation in real-time. If it gets stuck on CAPTCHA or can't submit, use the manual controls below.
+          Click directly in the browser to solve CAPTCHAs. The automation will pause when CAPTCHA appears and resume automatically after you solve it.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {screenshot ? (
-          <div className="border border-white/10 rounded-lg overflow-hidden bg-black">
-            <img
-              src={screenshot}
-              alt="Browser screenshot"
-              className="w-full h-auto"
-              data-testid="browser-screenshot"
-            />
-            <div className="p-2 bg-black/50 text-xs text-gray-400">
-              Last updated: {lastUpdate.toLocaleTimeString()}
+        <div className="border border-white/10 rounded-lg overflow-hidden bg-black aspect-video">
+          {error ? (
+            <div className="flex items-center justify-center h-full min-h-[400px] p-8 text-center">
+              <div className="space-y-2">
+                <AlertCircle className="h-8 w-8 text-yellow-500 mx-auto" />
+                <p className="text-gray-400">{error}</p>
+                <p className="text-sm text-gray-500">Waiting for VNC server to start...</p>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="border border-white/10 rounded-lg p-8 text-center text-gray-400">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-            <p>Loading browser view...</p>
-          </div>
-        )}
-
-        <div className="flex gap-2">
-          <Button
-            onClick={() => refreshMutation.mutate()}
-            disabled={refreshMutation.isPending}
-            variant="outline"
-            className="flex-1"
-            data-testid="button-refresh-page"
-          >
-            {refreshMutation.isPending ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4 mr-2" />
-            )}
-            Refresh Page
-          </Button>
-          <Button
-            onClick={() => submitMutation.mutate()}
-            disabled={submitMutation.isPending}
-            className="flex-1"
-            data-testid="button-manual-submit"
-          >
-            {submitMutation.isPending ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4 mr-2" />
-            )}
-            Click Submit
-          </Button>
+          ) : !vncUrl ? (
+            <div className="flex items-center justify-center h-full min-h-[400px] p-8 text-center">
+              <div className="space-y-2">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-400 mx-auto" />
+                <p className="text-gray-400">Starting browser...</p>
+              </div>
+            </div>
+          ) : (
+            <div 
+              ref={vncContainerRef} 
+              className="w-full h-full min-h-[400px]"
+              data-testid="vnc-container"
+            />
+          )}
         </div>
 
         <div className="text-sm text-gray-400 bg-black/20 p-3 rounded-lg border border-white/5">
-          <p className="font-semibold mb-1">Manual Controls:</p>
+          <p className="font-semibold mb-1 flex items-center gap-2">
+            <Monitor className="h-4 w-4" />
+            How to use:
+          </p>
           <ul className="space-y-1 text-xs">
-            <li>• <strong>Refresh Page:</strong> Reload the browser if it's stuck or you solved CAPTCHA</li>
-            <li>• <strong>Click Submit:</strong> Manually trigger the submit button if automation can't find it</li>
-            <li>• The browser window is open on the server - solve CAPTCHA there if needed</li>
+            <li>• <strong>Click directly:</strong> You can click and type in the browser above to solve CAPTCHAs</li>
+            <li>• <strong>Automation pauses:</strong> When CAPTCHA appears, automation waits for you to solve it</li>
+            <li>• <strong>Auto-resume:</strong> After solving CAPTCHA, automation continues automatically</li>
+            <li>• <strong>Full control:</strong> This is a real browser - interact with it like any website</li>
           </ul>
         </div>
+
+        {isConnected && (
+          <div className="text-xs text-center text-green-400 flex items-center justify-center gap-2">
+            <span className="h-2 w-2 bg-green-500 rounded-full" />
+            Connected - Browser is ready for interaction
+          </div>
+        )}
       </CardContent>
     </Card>
   );

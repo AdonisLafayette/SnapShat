@@ -1,6 +1,7 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
 import { storage } from './storage';
 import type { Friend, SubmissionStatus } from '@shared/schema';
+import { vncManager } from './vnc-manager';
 
 const TICKET_URL = "https://help.snapchat.com/hc/en-us/requests/new?co=true&ticket_form_id=149423";
 
@@ -22,13 +23,18 @@ export class SnapchatAutomation {
   async initialize() {
     if (!this.browser) {
       try {
+        // Start VNC server first
+        console.log('🚀 Starting VNC server...');
+        await vncManager.start();
+        const displayNum = vncManager.getDisplayNumber();
+        
         // Use system Chromium (installed via Nix)
         const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium';
         
-        console.log('🚀 Launching browser with executablePath:', executablePath);
+        console.log(`🚀 Launching browser on display :${displayNum} with executablePath:`, executablePath);
         
         this.browser = await puppeteer.launch({
-          headless: false, // Show browser for captcha solving
+          headless: false, // Show browser for captcha solving (visible in VNC)
           executablePath,
           args: [
             '--no-sandbox',
@@ -38,10 +44,11 @@ export class SnapchatAutomation {
             '--disable-web-security',
             '--disable-features=IsolateOrigins,site-per-process',
           ],
-          defaultViewport: { width: 1280, height: 800 },
+          defaultViewport: { width: 1920, height: 1080 },
+          env: { ...process.env, DISPLAY: `:${displayNum}` }
         });
         
-        console.log('✓ Browser initialized successfully');
+        console.log('✓ Browser initialized successfully on VNC display');
         
         // Test browser is working by creating and closing a test page
         const testPage = await this.browser.newPage();

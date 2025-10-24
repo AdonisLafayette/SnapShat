@@ -5,6 +5,7 @@ import { storage } from "./storage";
 import { automation } from "./automation";
 import { insertFriendSchema, insertSettingsSchema } from "@shared/schema";
 import multer from "multer";
+import { vncManager } from "./vnc-manager";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -239,6 +240,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: 'No active browser page' });
       }
       res.json({ screenshot: `data:image/png;base64,${screenshot}` });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get('/api/process/vnc-url', async (req, res) => {
+    try {
+      if (!vncManager.getIsRunning()) {
+        return res.status(404).json({ error: 'VNC not running' });
+      }
+      res.json({ 
+        url: vncManager.getWebSocketURL(),
+        isRunning: vncManager.getIsRunning()
+      });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
