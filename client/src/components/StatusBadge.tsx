@@ -46,12 +46,12 @@ export default function StatusBadge({ status, className }: StatusBadgeProps) {
       variant="outline"
       className={cn(
         "rounded-full px-3 py-1 text-xs font-medium uppercase tracking-wide font-mono",
-        "backdrop-blur-sm",
+        "backdrop-blur-sm shadow-lg",
         config.className,
         className
       )}
     >
-      <Icon className={cn("w-3 h-3 mr-1.5", config.animate && "animate-spin")} />
+      <Icon className={cn("w-3 h-3 mr-1.5", 'animate' in config && config.animate && "animate-spin")} />
       {config.label}
     </Badge>
   );

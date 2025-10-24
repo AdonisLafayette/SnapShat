@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import StatusBadge from "./StatusBadge";
@@ -14,10 +13,7 @@ interface FriendCardProps {
 }
 
 export default function FriendCard({ friend, status = 'pending', selected = false, onToggle }: FriendCardProps) {
-  const [isChecked, setIsChecked] = useState(selected);
-
   const handleCheckChange = (checked: boolean) => {
-    setIsChecked(checked);
     onToggle?.(friend.id, checked);
     console.log(`Friend ${friend.username} ${checked ? 'selected' : 'deselected'}`);
   };
@@ -31,24 +27,24 @@ export default function FriendCard({ friend, status = 'pending', selected = fals
 
   return (
     <GlassCard className={cn(
-      "relative transition-all duration-200",
-      isChecked && "ring-2 ring-primary/50"
+      "relative transition-all duration-300 hover:shadow-[0_12px_40px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.2)]",
+      selected && "ring-2 ring-primary/60 shadow-[0_0_0_2px_rgba(59,130,246,0.3),0_12px_40px_rgba(0,0,0,0.3)]"
     )}>
       <div className="flex items-start gap-4">
-        <Avatar className="w-12 h-12 ring-2 ring-border/50">
+        <Avatar className="w-14 h-14 ring-2 ring-white/20 shadow-lg">
           <AvatarImage src={friend.profilePictureUrl || undefined} alt={friend.username} />
-          <AvatarFallback className="bg-primary/10 text-primary font-medium">
+          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold text-base">
             {initials}
           </AvatarFallback>
         </Avatar>
         
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2 mb-2">
-            <h3 className="text-base font-medium truncate">{friend.username}</h3>
+            <h3 className="text-base font-semibold truncate text-foreground/95">{friend.username}</h3>
             <Checkbox
-              checked={isChecked}
+              checked={selected}
               onCheckedChange={handleCheckChange}
-              className="w-5 h-5 rounded-md data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+              className="w-5 h-5 rounded-lg data-[state=checked]:bg-primary data-[state=checked]:border-primary transition-all"
               data-testid={`checkbox-friend-${friend.id}`}
             />
           </div>

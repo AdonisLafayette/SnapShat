@@ -31,8 +31,8 @@ export function useWebSocket(url: string) {
         ws.onmessage = (event) => {
           try {
             const message = JSON.parse(event.data);
-            // Add unique ID to prevent duplicate processing
-            setLastMessage({ ...message, _id: ++messageIdRef.current });
+            // Use callback form to avoid stale closures
+            setLastMessage(message);
           } catch (error) {
             console.error('Failed to parse WebSocket message:', error);
           }

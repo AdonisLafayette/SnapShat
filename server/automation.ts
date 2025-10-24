@@ -26,7 +26,10 @@ export class SnapchatAutomation {
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-web-security',
+          '--start-maximized',
+          '--disable-blink-features=AutomationControlled',
         ],
+        defaultViewport: null,
       });
     }
   }
@@ -46,18 +49,30 @@ export class SnapchatAutomation {
         return false;
       }
 
-      await page.goto(TICKET_URL, { waitUntil: 'networkidle2', timeout: 30000 });
+      await page.goto(TICKET_URL, { waitUntil: 'networkidle2', timeout: 60000 });
       
+      let added = 0;
       for (const cookie of cookies) {
         try {
-          await page.setCookie(cookie);
+          const safeCookie: any = {
+            name: cookie.name,
+            value: cookie.value,
+            domain: cookie.domain,
+            path: cookie.path,
+          };
+          if (cookie.expires) safeCookie.expires = cookie.expires;
+          if (cookie.httpOnly !== undefined) safeCookie.httpOnly = cookie.httpOnly;
+          if (cookie.secure !== undefined) safeCookie.secure = cookie.secure;
+          
+          await page.setCookie(safeCookie);
+          added++;
         } catch (err) {
           console.log('Failed to set cookie:', err);
         }
       }
 
-      await page.reload({ waitUntil: 'networkidle2' });
-      console.log(`Loaded ${cookies.length} cookies`);
+      await page.reload({ waitUntil: 'networkidle2', timeout: 60000 });
+      console.log(`🗝️ Cookies loaded; ${added}/${cookies.length} applied; attempting bypass.`);
       return true;
     } catch (error) {
       console.error('Error loading cookies:', error);
@@ -122,39 +137,51 @@ export class SnapchatAutomation {
   async fillField(page: Page, selectors: string[], value: string, fieldName: string): Promise<boolean> {
     for (const selector of selectors) {
       try {
+        await page.waitForSelector(selector, { timeout: 5000 }).catch(() => null);
         const element = await page.$(selector);
         if (element) {
-          console.log(`Found ${fieldName} using selector: ${selector}`);
+          console.log(`✓ Found ${fieldName} using selector: ${selector}`);
           
-          // Try multiple filling strategies
-          await element.click();
-          await delay(200);
+          // Human-like interaction
+          await element.click({ delay: 100 });
+          await delay(150 + Math.random() * 100);
           
           // Clear existing value
           await element.evaluate((el: any) => {
             if (el.value !== undefined) el.value = '';
+            if (el.getAttribute && el.getAttribute('contenteditable') === 'true') {
+              el.innerText = '';
+            }
           });
           
-          // Type the value
-          await element.type(value, { delay: 50 });
+          // Type with random human-like delays
+          for (const char of value) {
+            await element.type(char, { delay: 50 + Math.random() * 50 });
+          }
           
           // Trigger events
           await element.evaluate((el: any, val: string) => {
-            el.value = val;
+            if (el.getAttribute && el.getAttribute('contenteditable') === 'true') {
+              el.focus();
+              el.innerText = val;
+            } else {
+              el.focus();
+              el.value = val;
+            }
             el.dispatchEvent(new Event('input', { bubbles: true }));
             el.dispatchEvent(new Event('change', { bubbles: true }));
             el.dispatchEvent(new Event('blur', { bubbles: true }));
           }, value);
 
-          await delay(200);
+          await delay(300 + Math.random() * 200);
           return true;
         }
       } catch (error) {
-        console.log(`Selector ${selector} failed for ${fieldName}:`, error);
+        console.log(`⚠ Selector ${selector} failed for ${fieldName}:`, error);
       }
     }
 
-    console.error(`Could not find field: ${fieldName}`);
+    console.error(`❌ Could not find field: ${fieldName}`);
     return false;
   }
 
@@ -388,8 +415,8 @@ export class SnapchatAutomation {
         });
       }
 
-      // Wait between requests to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Wait between requests to avoid rate limiting (random delay to appear more human)
+      await new Promise(resolve => setTimeout(resolve, 3000 + Math.random() * 2000));
     }
 
     this.isProcessing = false;
