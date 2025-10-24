@@ -27,6 +27,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // VNC WebSocket proxy server
+  const vncWss = new WebSocketServer({ server: httpServer, path: '/vnc' });
+  
+  vncWss.on('connection', (clientWs) => {
+    console.log('[VNC Proxy] Client connected');
+    
+    if (!vncManager.getIsRunning()) {
+      console.error('[VNC Proxy] VNC server not running');
+      clientWs.close();
+      return;
+    }
+
+    // Connect to VNC server
+    const net = require('net');
+    const vncSocket = new net.Socket();
+    const vncPort = vncManager.getVNCPort();
+
+    vncSocket.connect(vncPort, 'localhost', () => {
+      console.log('[VNC Proxy] Connected to VNC server');
+    });
+
+    // Forward data from VNC server to client
+    vncSocket.on('data', (data: Buffer) => {
+      if (clientWs.readyState === WebSocket.OPEN) {
+        clientWs.send(data);
+      }
+    });
+
+    // Forward data from client to VNC server
+    clientWs.on('message', (data) => {
+      vncSocket.write(data as Buffer);
+    });
+
+    // Handle disconnections
+    vncSocket.on('close', () => {
+      console.log('[VNC Proxy] VNC server connection closed');
+      clientWs.close();
+    });
+
+    vncSocket.on('error', (err: Error) => {
+      console.error('[VNC Proxy] VNC socket error:', err);
+      clientWs.close();
+    });
+
+    clientWs.on('close', () => {
+      console.log('[VNC Proxy] Client disconnected');
+      vncSocket.destroy();
+    });
+
+    clientWs.on('error', (err: Error) => {
+      console.error('[VNC Proxy] Client socket error:', err);
+      vncSocket.destroy();
+    });
+  });
+
   // Broadcast function
   function broadcast(type: string, data: any) {
     const message = JSON.stringify({ type, data });
@@ -250,8 +305,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!vncManager.getIsRunning()) {
         return res.status(404).json({ error: 'VNC not running' });
       }
+      
+      // Build WebSocket URL based on request host
+      const protocol = (req.secure || req.get('x-forwarded-proto') === 'https') ? 'wss' : 'ws';
+      const host = req.get('host') || 'localhost:5000';
+      const wsUrl = `${protocol}://${host}/vnc`;
+      
+      console.log(`[VNC] Protocol: ${protocol}, Host: ${host}, WebSocket URL: ${wsUrl}`);
+      
       res.json({ 
-        url: vncManager.getWebSocketURL(),
+        url: wsUrl,
         isRunning: vncManager.getIsRunning()
       });
     } catch (error: any) {

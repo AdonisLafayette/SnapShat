@@ -58,14 +58,8 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
       // Clear container
       vncContainerRef.current.innerHTML = '';
 
-      // Create canvas element
-      const canvas = document.createElement('canvas');
-      canvas.style.width = '100%';
-      canvas.style.height = 'auto';
-      vncContainerRef.current.appendChild(canvas);
-
-      // Connect to noVNC
-      const rfb = new RFB(canvas, vncUrl, {
+      // Connect to noVNC - it creates its own canvas elements
+      const rfb = new RFB(vncContainerRef.current, vncUrl, {
         credentials: {}
       });
 

@@ -51,11 +51,12 @@ class VNCManager {
       // Wait for Xvfb to start
       await this.sleep(2000);
 
-      // Start x11vnc
-      console.log(`[VNC] Starting x11vnc on port ${this.vncPort}`);
+      // Start x11vnc (bind to localhost only for security)
+      console.log(`[VNC] Starting x11vnc on port ${this.vncPort} (localhost only)`);
       this.processes.vnc = spawn('x11vnc', [
         '-display', `:${this.displayNumber}`,
-        '-nopw',
+        '-localhost',  // Bind to localhost only for security
+        '-nopw',  // No password (safe because localhost-only)
         '-forever',
         '-shared',
         '-rfbport', this.vncPort.toString(),
@@ -85,42 +86,12 @@ class VNCManager {
       await this.sleep(2000);
       await this.waitForPort(this.vncPort);
 
-      // Start websockify
-      console.log(`[VNC] Starting websockify on port ${this.wsPort}`);
-      this.processes.websockify = spawn('websockify', [
-        '--web=/node_modules/@novnc/novnc',
-        `${this.wsPort}`,
-        `localhost:${this.vncPort}`
-      ], {
-        stdio: 'pipe',
-        detached: false
-      });
-
-      this.processes.websockify.on('error', (err) => {
-        console.error('[VNC] websockify error:', err);
-      });
-
-      this.processes.websockify.stdout?.on('data', (data) => {
-        console.log('[VNC] websockify:', data.toString().trim());
-      });
-
-      this.processes.websockify.stderr?.on('data', (data) => {
-        const output = data.toString();
-        if (!output.includes('WARNING')) {
-          console.error('[VNC] websockify stderr:', output);
-        }
-      });
-
-      // Wait for websockify to start
-      await this.sleep(1000);
-      await this.waitForPort(this.wsPort);
-
       this.isRunning = true;
-      console.log(`[VNC] All processes started successfully`);
+      console.log(`[VNC] VNC server started successfully`);
       console.log(`[VNC] Display: :${this.displayNumber}`);
-      console.log(`[VNC] WebSocket URL: ws://localhost:${this.wsPort}`);
+      console.log(`[VNC] VNC Port: localhost:${this.vncPort}`);
 
-      return `ws://localhost:${this.wsPort}`;
+      return `localhost:${this.vncPort}`;
     } catch (error) {
       console.error('[VNC] Failed to start VNC stack:', error);
       await this.stop();
@@ -131,11 +102,6 @@ class VNCManager {
   async stop(): Promise<void> {
     console.log('[VNC] Stopping all VNC processes');
     
-    if (this.processes.websockify) {
-      this.processes.websockify.kill('SIGTERM');
-      this.processes.websockify = null;
-    }
-
     if (this.processes.vnc) {
       this.processes.vnc.kill('SIGTERM');
       this.processes.vnc = null;
@@ -154,8 +120,8 @@ class VNCManager {
     return this.displayNumber;
   }
 
-  getWebSocketURL(): string {
-    return `ws://localhost:${this.wsPort}`;
+  getVNCPort(): number {
+    return this.vncPort;
   }
 
   getIsRunning(): boolean {
