@@ -32,11 +32,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     server: httpServer, 
     path: '/vnc',
     handleProtocols: (protocols, request) => {
-      // Accept binary subprotocol for noVNC compatibility
-      if (protocols.includes('binary')) {
+      // Convert Set to Array for easier handling
+      const protocolsArray = Array.from(protocols);
+      // Accept binary subprotocol for noVNC compatibility, or accept any protocol
+      if (protocolsArray.includes('binary')) {
         return 'binary';
       }
-      return false;
+      // Accept connection even without binary protocol
+      return protocolsArray.length > 0 ? protocolsArray[0] : '';
     }
   });
   
