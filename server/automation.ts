@@ -498,7 +498,20 @@ export class SnapchatAutomation {
           console.log('Could not save screenshot:', err);
         }
         
-        onStatusUpdate('captcha', `CAPTCHA detected for ${friend.username} - please solve it in the browser window`);
+        console.log('');
+        console.log('┌─────────────────────────────────────────────────────────────────┐');
+        console.log('│                                                                 │');
+        console.log('│  🤖 CAPTCHA DETECTED - MANUAL INTERVENTION REQUIRED            │');
+        console.log('│                                                                 │');
+        console.log('│  Please use the VNC viewer in the dashboard to see the browser │');
+        console.log('│  and solve the Cloudflare CAPTCHA challenge.                   │');
+        console.log('│                                                                 │');
+        console.log('│  The automation will automatically resume once solved.         │');
+        console.log('│                                                                 │');
+        console.log('└─────────────────────────────────────────────────────────────────┘');
+        console.log('');
+        
+        onStatusUpdate('captcha', `CAPTCHA detected for ${friend.username} - please solve it using the VNC viewer`);
         
         // Keep checking screenshots every 2 seconds so the user can monitor progress
         const captchaCheckInterval = setInterval(async () => {
@@ -521,21 +534,68 @@ export class SnapchatAutomation {
         console.log('✓ CAPTCHA solved, proceeding with form');
         console.log('⏳ Waiting for form to load after CAPTCHA solve...');
         
-        // Don't reload - just wait longer for the form to appear after CAPTCHA is solved
-        await delay(5000); // Give extra time for form to load
+        // Wait for the page to redirect/load the form after CAPTCHA solve
+        // Cloudflare often redirects after successful CAPTCHA
+        await delay(3000); // Initial wait for any redirect
         
-        // Verify form fields are actually present now
-        const formPresent = await page.evaluate(() => {
-          const inputs = document.querySelectorAll('input[name^="request[custom_fields]"]');
-          return inputs.length > 0;
-        });
+        // Check if we're still on the same page or if there's been a redirect
+        const currentUrl = page.url();
+        console.log(`Current URL after CAPTCHA solve: ${currentUrl}`);
         
-        if (!formPresent) {
-          console.log('⚠️ Form not loaded after CAPTCHA, reloading page...');
+        // If we're not on the ticket URL, navigate to it (using saved cookies)
+        if (!currentUrl.includes('requests/new')) {
+          console.log('⏳ Not on ticket form page, navigating with saved cookies...');
           await page.goto(TICKET_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
-          await delay(3000);
-        } else {
-          console.log('✓ Form fields detected after CAPTCHA solve');
+          await delay(2000);
+        }
+        
+        // Wait intelligently for form to appear (up to 60 seconds with progress checks)
+        console.log('⏳ Waiting for form fields to appear...');
+        let formAppeared = false;
+        for (let i = 0; i < 30; i++) {
+          const formPresent = await page.evaluate(() => {
+            const inputs = document.querySelectorAll('input[name^="request[custom_fields]"]');
+            const hasInputs = inputs.length > 0;
+            if (!hasInputs) {
+              // Log what we do see
+              const allInputs = document.querySelectorAll('input');
+              console.log(`Checking for form... Found ${allInputs.length} total inputs on page`);
+            }
+            return hasInputs;
+          });
+          
+          if (formPresent) {
+            console.log('✓ Form fields detected after CAPTCHA solve');
+            formAppeared = true;
+            break;
+          }
+          
+          // Check for CAPTCHA again - it might have appeared again
+          const captchaReappeared = await this.detectCaptcha(page);
+          if (captchaReappeared) {
+            console.log('⚠️ CAPTCHA appeared again after first solve, waiting for manual solve...');
+            onStatusUpdate('captcha', `Another CAPTCHA appeared - please solve it`);
+            const solved = await this.waitForCaptchaSolve(page, 300000);
+            if (!solved) {
+              return { success: false, requiresCaptcha: true, error: 'Second CAPTCHA not solved' };
+            }
+            i = 0; // Reset counter after solving second CAPTCHA
+            continue;
+          }
+          
+          console.log(`⏳ Form not yet loaded, waiting... (${i + 1}/30)`);
+          await delay(2000);
+        }
+        
+        if (!formAppeared) {
+          console.log('⚠️ Form still not loaded after 60 seconds');
+          // Take screenshot for debugging
+          try {
+            await page.screenshot({ path: '/tmp/form-not-appeared.png', fullPage: true });
+            console.log('📸 Screenshot saved to /tmp/form-not-appeared.png');
+          } catch (err) {
+            console.log('Could not save screenshot:', err);
+          }
         }
       }
 
@@ -543,25 +603,37 @@ export class SnapchatAutomation {
       console.log('📝 Filling form fields...');
       onStatusUpdate('running', `Filling form fields for ${friend.username}`);
       
-      // Wait for at least one form field to be visible before attempting to fill
-      console.log('⏳ Waiting for form fields to be ready...');
+      // Final verification: Wait for at least one form field to be visible before attempting to fill
+      console.log('⏳ Final check: Waiting for form fields to be ready...');
       const formFieldsReady = await page.waitForFunction(
         () => {
           const formInputs = document.querySelectorAll('input[name^="request[custom_fields]"]');
+          if (formInputs.length === 0) {
+            // Also check for common Zendesk form selectors as fallback
+            const anyFormInputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"]');
+            console.log(`No custom_fields inputs found. Found ${anyFormInputs.length} other inputs`);
+          }
           return formInputs.length > 0;
         },
-        { timeout: 30000 }
+        { timeout: 90000 } // 90 seconds - very generous timeout
       ).catch(() => null);
       
       if (!formFieldsReady) {
-        console.error('❌ Form fields never appeared');
+        console.error('❌ Form fields never appeared after all attempts');
         try {
+          const url = page.url();
+          const html = await page.content();
           await page.screenshot({ path: '/tmp/form-not-loaded.png', fullPage: true });
           console.log('📸 Screenshot saved to /tmp/form-not-loaded.png');
+          console.log(`Current URL: ${url}`);
+          console.log(`HTML length: ${html.length} characters`);
+          // Save HTML for debugging
+          require('fs').writeFileSync('/tmp/page-content.html', html);
+          console.log('📄 Page HTML saved to /tmp/page-content.html');
         } catch (err) {
-          console.log('Could not save screenshot:', err);
+          console.log('Could not save debug info:', err);
         }
-        return { success: false, requiresCaptcha: false, error: 'Form fields did not load' };
+        return { success: false, requiresCaptcha: false, error: 'Form fields did not load after 90 seconds' };
       }
       
       console.log('✓ Form fields are ready, proceeding to fill...');
