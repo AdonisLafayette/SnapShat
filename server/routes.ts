@@ -27,24 +27,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // VNC WebSocket proxy server
+  // VNC WebSocket proxy server with comprehensive logging
+  console.log('[VNC Proxy] Setting up VNC WebSocket server on path /vnc');
   const vncWss = new WebSocketServer({ 
     server: httpServer, 
     path: '/vnc',
     handleProtocols: (protocols, request) => {
       // Convert Set to Array for easier handling
       const protocolsArray = Array.from(protocols);
+      console.log('[VNC Proxy] Protocols requested:', protocolsArray);
       // Accept binary subprotocol for noVNC compatibility, or accept any protocol
       if (protocolsArray.includes('binary')) {
+        console.log('[VNC Proxy] Accepting binary protocol');
         return 'binary';
       }
       // Accept connection even without binary protocol
-      return protocolsArray.length > 0 ? protocolsArray[0] : '';
+      const selectedProtocol = protocolsArray.length > 0 ? protocolsArray[0] : '';
+      console.log('[VNC Proxy] Selected protocol:', selectedProtocol || '(none)');
+      return selectedProtocol;
     }
   });
   
+  vncWss.on('error', (error) => {
+    console.error('[VNC Proxy] WebSocket Server error:', error);
+  });
+  
   vncWss.on('connection', (clientWs, request) => {
-    console.log('[VNC Proxy] Client connected with protocol:', clientWs.protocol);
+    console.log('[VNC Proxy] ✓ Client connected with protocol:', clientWs.protocol);
+    console.log('[VNC Proxy] Request URL:', request.url);
     
     // Configure WebSocket for binary frames
     clientWs.binaryType = 'arraybuffer';
