@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Monitor, ExternalLink, Activity } from "lucide-react";
+import { Monitor, Activity } from "lucide-react";
 
 interface BrowserViewProps {
   isActive: boolean;
@@ -11,7 +10,6 @@ interface BrowserViewProps {
 export default function BrowserView({ isActive, currentFriend }: BrowserViewProps) {
   const [isCaptchaDetected, setIsCaptchaDetected] = useState(false);
 
-  // Poll for CAPTCHA status
   useEffect(() => {
     if (!isActive) {
       setIsCaptchaDetected(false);
@@ -20,7 +18,6 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
 
     const checkStatus = async () => {
       try {
-        // Add timestamp to bypass all caching (browser + server ETag)
         const timestamp = Date.now();
         const response = await fetch(`/api/process/status?_=${timestamp}`, {
           cache: 'no-store',
@@ -35,28 +32,11 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
       }
     };
 
-    // Initial check
     checkStatus();
-
-    // Poll every 2 seconds
     const interval = setInterval(checkStatus, 2000);
 
     return () => clearInterval(interval);
   }, [isActive]);
-
-  const handleOpenVNC = () => {
-    // Open VNC viewer in a popup window
-    const width = 1280;
-    const height = 800;
-    const left = (screen.width - width) / 2;
-    const top = (screen.height - height) / 2;
-    
-    window.open(
-      '/vnc.html',
-      'vnc-viewer',
-      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
-    );
-  };
 
   if (!isActive || !currentFriend) {
     return null;
@@ -91,21 +71,20 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
                   <h3 className="text-sm font-semibold text-yellow-200 mb-1">
                     🤖 CAPTCHA Detected - Action Required!
                   </h3>
-                  <p className="text-xs text-gray-300">
-                    The automation has encountered a CAPTCHA challenge. Click the button below to open the live browser view and solve it.
+                  <p className="text-xs text-gray-300 mb-2">
+                    The automation has encountered a CAPTCHA challenge.
                   </p>
+                  <div className="bg-yellow-900/30 border border-yellow-600/40 rounded-md p-3">
+                    <p className="text-xs text-yellow-100 font-semibold mb-1.5">
+                      → Switch to the Chrome window on your desktop
+                    </p>
+                    <p className="text-xs text-gray-300">
+                      A Chrome browser window should be open on your Windows desktop. Click on it to bring it to the front, then solve the CAPTCHA. The automation will automatically resume once you're done!
+                    </p>
+                  </div>
                 </div>
-                <Button
-                  onClick={handleOpenVNC}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
-                  size="lg"
-                  data-testid="button-open-vnc"
-                >
-                  <ExternalLink className="h-5 w-5 mr-2" />
-                  Open Live Browser View
-                </Button>
-                <p className="text-xs text-gray-400 text-center">
-                  A popup window will open with real-time browser access
+                <p className="text-xs text-gray-400 text-center italic">
+                  ✨ After solving, your session will be saved to minimize future CAPTCHAs
                 </p>
               </div>
             </div>
@@ -134,7 +113,7 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
           <ul className="space-y-1.5 text-xs">
             <li>✨ <strong>Automatic:</strong> The bot fills forms automatically in the background</li>
             <li>🔍 <strong>CAPTCHA Detection:</strong> When CAPTCHA appears, you'll see an alert above</li>
-            <li>🖱️ <strong>Live Browser:</strong> Click "Open Live Browser View" for real-time interaction</li>
+            <li>🖥️ <strong>Native Windows:</strong> Chrome opens directly on your desktop for easy CAPTCHA solving</li>
             <li>✅ <strong>Auto-Resume:</strong> Once you solve the CAPTCHA, automation continues automatically</li>
             <li>🍪 <strong>Smart Cookies:</strong> Your session is saved to minimize future CAPTCHAs</li>
           </ul>

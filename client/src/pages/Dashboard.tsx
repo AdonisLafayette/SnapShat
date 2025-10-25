@@ -42,11 +42,7 @@ export default function Dashboard() {
   // Use refs to avoid dependency issues in WebSocket effect
   const friendsMapRef = useRef<Map<string, Friend>>(new Map());
   const toastRef = useRef(toast);
-  
-  // Keep toast ref updated
-  useEffect(() => {
-    toastRef.current = toast;
-  }, [toast]);
+  toastRef.current = toast; // Update ref directly instead of useEffect
 
   // Fetch friends
   const { data: friends = [], isLoading: friendsLoading } = useQuery<Friend[]>({
@@ -91,7 +87,12 @@ export default function Dashboard() {
     submissions.forEach(sub => {
       statusMap[sub.friendId] = sub.status as SubmissionStatus;
     });
-    setFriendStatuses(statusMap);
+    setFriendStatuses(prev => {
+      // Only update if different to avoid unnecessary re-renders
+      const isDifferent = Object.keys(statusMap).length !== Object.keys(prev).length ||
+        Object.keys(statusMap).some(key => statusMap[key] !== prev[key]);
+      return isDifferent ? statusMap : prev;
+    });
   }, [submissions]);
 
   // Set up WebSocket message handler
@@ -383,20 +384,20 @@ export default function Dashboard() {
   if (friendsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+        <div className="glass-card glass-card-hover p-12 rounded-3xl text-center space-y-4 float-animation">
+          <div className="w-20 h-20 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto glow-blue"></div>
+          <p className="text-lg font-medium text-foreground/90">Loading your dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col relative">
       <AppHeader onOpenSettings={() => setSettingsOpen(true)} />
       
-      <main className="flex-1 p-8">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <main className="flex-1 p-6 md:p-8 lg:p-10">
+        <div className="max-w-7xl mx-auto space-y-8">
           {friends.length === 0 ? (
             <EmptyState onAddFriend={() => setAddFriendOpen(true)} />
           ) : (
@@ -412,18 +413,20 @@ export default function Dashboard() {
                 onStopProcessing={handleStopProcessing}
               />
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-8">
                   {/* Browser View when processing */}
                   {processStatus?.isProcessing && processStatus?.currentFriend && (
-                    <BrowserView 
-                      isActive={processStatus.isProcessing} 
-                      currentFriend={processStatus.currentFriend}
-                    />
+                    <div className="float-animation">
+                      <BrowserView 
+                        isActive={processStatus.isProcessing} 
+                        currentFriend={processStatus.currentFriend}
+                      />
+                    </div>
                   )}
 
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex-1 min-w-[200px]">
                       <SearchBar
                         value={searchQuery}
                         onChange={setSearchQuery}
@@ -432,44 +435,49 @@ export default function Dashboard() {
                     </div>
                     <Button
                       onClick={() => setAddFriendOpen(true)}
-                      className="rounded-xl"
+                      className="rounded-2xl px-6 py-6 font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500"
                       data-testid="button-add-friend"
                     >
-                      <UserPlus className="w-4 h-4 mr-2" />
+                      <UserPlus className="w-5 h-5 mr-2" />
                       Add Friend
                     </Button>
                     <Button
                       variant="outline"
                       onClick={handleImportClick}
                       disabled={importFriendsMutation.isPending}
-                      className="rounded-xl"
+                      className="rounded-2xl px-6 py-6 font-semibold glass-card border-2 hover:scale-105 transition-all"
                       data-testid="button-import-friends"
                     >
-                      <Upload className="w-4 h-4 mr-2" />
+                      <Upload className="w-5 h-5 mr-2" />
                       Import
                     </Button>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {filteredFriends.map(friend => (
-                      <FriendCard
-                        key={friend.id}
-                        friend={friend}
-                        status={friendStatuses[friend.id] || 'pending'}
-                        selected={selectedFriends.has(friend.id)}
-                        onToggle={handleToggleFriend}
-                      />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {filteredFriends.map((friend, index) => (
+                      <div 
+                        key={friend.id} 
+                        className="float-animation"
+                        style={{ animationDelay: `${index * 0.1}s` }}
+                      >
+                        <FriendCard
+                          friend={friend}
+                          status={friendStatuses[friend.id] || 'pending'}
+                          selected={selectedFriends.has(friend.id)}
+                          onToggle={handleToggleFriend}
+                        />
+                      </div>
                     ))}
                   </div>
 
                   {filteredFriends.length === 0 && searchQuery && (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <p>No friends found matching "{searchQuery}"</p>
+                    <div className="glass-card p-16 rounded-3xl text-center">
+                      <p className="text-xl font-medium text-foreground/70">No friends found matching "{searchQuery}"</p>
                     </div>
                   )}
                 </div>
 
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-1 float-animation-delayed">
                   <ActivityLogPanel logs={logs} />
                 </div>
               </div>

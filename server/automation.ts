@@ -200,6 +200,11 @@ export class SnapchatAutomation {
     const startTime = Date.now();
 
     while (Date.now() - startTime < timeout) {
+      if (this.shouldStop) {
+        console.log('CAPTCHA solve interrupted by stop signal');
+        return false;
+      }
+      
       const hasCaptcha = await this.detectCaptcha(page);
       if (!hasCaptcha) {
         console.log('CAPTCHA solved!');
@@ -442,6 +447,11 @@ export class SnapchatAutomation {
     let page: Page | null = null;
     
     try {
+      if (this.shouldStop) {
+        console.log('Processing interrupted before starting');
+        return { success: false, requiresCaptcha: false, error: 'Processing stopped by user' };
+      }
+      
       console.log(`\n🔄 Starting to process ${friend.username}...`);
       console.log('📄 Creating new browser page...');
       page = await this.browser!.newPage();
@@ -452,6 +462,11 @@ export class SnapchatAutomation {
       // Wait for page to be ready before doing anything
       await delay(500);
       onStatusUpdate('running', `Loading Snapchat ticket page for ${friend.username}`);
+      
+      if (this.shouldStop) {
+        console.log('Processing interrupted after page creation');
+        return { success: false, requiresCaptcha: false, error: 'Processing stopped by user' };
+      }
       
       // Load cookies if available
       console.log('🍪 Attempting to load cookies...');
@@ -502,7 +517,7 @@ export class SnapchatAutomation {
         console.log('│                                                                 │');
         console.log('│  🤖 CAPTCHA DETECTED - MANUAL INTERVENTION REQUIRED            │');
         console.log('│                                                                 │');
-        console.log('│  Please use the VNC viewer in the dashboard to see the browser │');
+        console.log('│  Please switch to the Chrome window on your desktop            │');
         console.log('│  and solve the Cloudflare CAPTCHA challenge.                   │');
         console.log('│                                                                 │');
         console.log('│  The automation will automatically resume once solved.         │');
@@ -510,7 +525,7 @@ export class SnapchatAutomation {
         console.log('└─────────────────────────────────────────────────────────────────┘');
         console.log('');
         
-        onStatusUpdate('captcha', `CAPTCHA detected for ${friend.username} - please solve it using the VNC viewer`);
+        onStatusUpdate('captcha', `CAPTCHA detected for ${friend.username} - please solve it in the Chrome window`);
         
         // Keep checking screenshots every 2 seconds so the user can monitor progress
         const captchaCheckInterval = setInterval(async () => {
@@ -552,6 +567,11 @@ export class SnapchatAutomation {
         console.log('⏳ Waiting for form fields to appear...');
         let formAppeared = false;
         for (let i = 0; i < 30; i++) {
+          if (this.shouldStop) {
+            console.log('Form waiting interrupted by stop signal');
+            return { success: false, requiresCaptcha: false, error: 'Processing stopped by user' };
+          }
+          
           const formPresent = await page.evaluate(() => {
             const inputs = document.querySelectorAll('input[name^="request[custom_fields]"]');
             const hasInputs = inputs.length > 0;
@@ -598,6 +618,11 @@ export class SnapchatAutomation {
         }
       }
 
+      if (this.shouldStop) {
+        console.log('Processing interrupted before form filling');
+        return { success: false, requiresCaptcha: false, error: 'Processing stopped by user' };
+      }
+      
       // Fill form with retry logic
       console.log('📝 Filling form fields...');
       onStatusUpdate('running', `Filling form fields for ${friend.username}`);
