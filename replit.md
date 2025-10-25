@@ -1,18 +1,18 @@
 # Snapstreak Restore - Automated Streak Restoration Tool
 
 ## Overview
-A full-stack web application that automates the process of submitting Snapchat streak restoration requests. The application handles form filling, CAPTCHA detection, cookie persistence, and provides a live VNC viewer for manual interaction when needed.
+A Windows-native full-stack web application that automates the process of submitting Snapchat streak restoration requests. The application handles form filling, CAPTCHA detection, cookie persistence, and opens Chrome natively on your desktop for manual CAPTCHA solving when needed. Features a stunning iOS 26-inspired liquid glass design system.
 
 ## Last Updated
-October 25, 2025 - Cross-platform support added (Linux/Replit + Windows)
+October 25, 2025 - Windows-native implementation complete with iOS 26 liquid glass UI
 
 ## Project Architecture
 
 ### Technology Stack
-- **Frontend**: React + TypeScript + Vite + Tailwind CSS + shadcn/ui
+- **Frontend**: React + TypeScript + Vite + Tailwind CSS + shadcn/ui + iOS 26 Liquid Glass Design
 - **Backend**: Express.js + TypeScript
-- **Automation**: Puppeteer + x11vnc + Xvfb
-- **Real-time**: WebSocket (ws library) + noVNC
+- **Automation**: Puppeteer (Windows-native Chrome)
+- **Real-time**: WebSocket (ws library)
 - **Storage**: In-memory storage (MemStorage)
 
 ### Key Features
@@ -66,13 +66,12 @@ October 25, 2025 - Cross-platform support added (Linux/Replit + Windows)
 
 ### Frontend (`client/`)
 - `src/pages/Dashboard.tsx` - Main dashboard with friend list and controls
-- `src/components/BrowserView.tsx` - Embedded VNC viewer component  
+- `src/components/BrowserView.tsx` - Browser status indicator with CAPTCHA guidance
 - `src/hooks/useWebSocket.ts` - WebSocket connection hook
-- `src/components/ui/` - shadcn/ui components
+- `src/components/ui/` - shadcn/ui components with iOS 26 liquid glass styling
 
 ### Backend (`server/`)
 - `automation.ts` - Core Puppeteer automation logic
-- `vnc-manager.ts` - VNC server management (Xvfb + x11vnc)
 - `routes.ts` - API routes and WebSocket servers
 - `storage.ts` - In-memory storage implementation
 - `index.ts` - Express server entry point
@@ -91,25 +90,24 @@ User provides their own details (username, email, phone) used for form submissio
 ### 3. User Starts Processing
 Clicking "Start Processing" initiates the automation:
 
-1. **VNC Server Starts**: Xvfb and x11vnc launch automatically
-2. **Browser Launches**: Puppeteer launches Chromium on virtual display
-3. **Cookie Loading**: Loads any saved cookies to bypass CAPTCHA
-4. **Page Navigation**: Navigates to Snapchat help page
-5. **CAPTCHA Detection**: Checks for Cloudflare Turnstile
-   - If no CAPTCHA: Proceeds to step 7
-   - If CAPTCHA present: Goes to step 6
-6. **Manual CAPTCHA Solving**:
+1. **Browser Launches**: Puppeteer launches Chrome natively on Windows desktop
+2. **Cookie Loading**: Loads any saved cookies to bypass CAPTCHA
+3. **Page Navigation**: Navigates to Snapchat help page
+4. **CAPTCHA Detection**: Checks for Cloudflare Turnstile
+   - If no CAPTCHA: Proceeds to step 6
+   - If CAPTCHA present: Goes to step 5
+5. **Manual CAPTCHA Solving**:
    - Automation pauses
-   - User sees live browser via VNC viewer
+   - User switches to Chrome window on desktop
    - User solves CAPTCHA by clicking checkbox
    - System detects when token is generated (CAPTCHA solved)
    - Cookies automatically saved
    - Automation resumes
-7. **Form Filling**: Fills all required fields with human-like delays
-8. **Form Submission**: Clicks submit button
-9. **Success Verification**: Waits for success confirmation page
-10. **Status Update**: Updates friend submission status
-11. **Next Friend**: Repeats for next friend in queue
+6. **Form Filling**: Fills all required fields with human-like delays
+7. **Form Submission**: Clicks submit button
+8. **Success Verification**: Waits for success confirmation page
+9. **Status Update**: Updates friend submission status
+10. **Next Friend**: Repeats for next friend in queue
 
 ### 4. Future Requests Skip CAPTCHA
 Because cookies are saved, subsequent requests often bypass CAPTCHA entirely, maximizing automation.
@@ -126,21 +124,19 @@ The application implements a sophisticated cookie management system:
 
 This approach significantly reduces manual intervention as the first CAPTCHA solve often enables all subsequent submissions to proceed automatically.
 
-## VNC Architecture
+## Windows-Native Browser Architecture
 
 ```
-User Browser
-    ↓ (WebSocket)
-Express Server (/vnc WebSocket proxy)
-    ↓ (TCP Socket)
-x11vnc VNC Server (port 5900)
-    ↓
-Xvfb Virtual Display (:99)
-    ↓
-Puppeteer/Chromium Browser
+User Dashboard (Web Interface)
+    ↓ (WebSocket for status updates)
+Express Server Backend
+    ↓ (Puppeteer automation)
+Chrome Browser (Native Windows Window)
+    ↑
+User interacts directly with Chrome for CAPTCHA solving
 ```
 
-The VNC setup allows users to see and interact with the actual browser running the automation, essential for solving CAPTCHAs.
+The Windows-native setup allows users to see and interact with Chrome directly on their desktop, providing a seamless CAPTCHA solving experience.
 
 ## API Endpoints
 
@@ -162,7 +158,6 @@ The VNC setup allows users to see and interact with the actual browser running t
 - `POST /api/process/start` - Start automation for selected friends
 - `POST /api/process/stop` - Stop ongoing automation
 - `GET /api/process/status` - Get current processing status
-- `GET /api/process/vnc-url` - Get VNC WebSocket URL
 - `GET /api/process/screenshot` - Get current page screenshot
 
 ### Cookies
@@ -177,49 +172,38 @@ Real-time updates for:
 - Log entries
 - Errors
 
-### VNC Proxy (`/vnc`)
-Binary WebSocket proxy that:
-- Forwards VNC data from x11vnc to browser
-- Handles binary protocol negotiation
-- Manages keepalive pings
-- Enables noVNC client connection
+## Windows-Native Design
 
-## Cross-Platform Support
+The application is **Windows-native only** with these features:
 
-The application now supports both **Linux (Replit)** and **Windows (local PC)**:
-
-### Linux / Replit
-- Uses VNC stack (Xvfb + x11vnc) for browser viewing
-- Chromium from Nix store
-- Embedded noVNC viewer in the dashboard
-- Full automation with captcha viewer
-
-### Windows
+### Windows Implementation
 - Uses system Chrome (auto-detected by Puppeteer)
-- Headful browser opens natively on desktop
-- No VNC needed - interact directly with browser window
-- Same automation capabilities
+- Headful browser opens natively on desktop for CAPTCHA solving
+- Direct window interaction - no embedded viewers
+- Same automation capabilities with native Windows UX
+- Simple download-and-run experience (double-click start.bat)
 
-The platform is **automatically detected** and the appropriate browser configuration is used.
+### iOS 26 Liquid Glass UI
+- **Multi-layer gradients**: Vibrant blues, purples, pinks, and cyans creating depth
+- **Glassmorphism**: Frosted glass cards with backdrop-blur-xl effects
+- **Depth & Shadows**: Multi-layer shadow system for floating card effect
+- **Fluid animations**: Smooth hover states, shimmer effects, staggered transitions
+- **Modern typography**: Inter font family with gradient text effects
+- **Gradient buttons**: Blue-to-purple gradients with glow effects
+- **CSS utilities**: Reusable glass-card, transition-smooth, text-gradient classes
 
 ## Environment Setup
 
 ### Required System Dependencies
 
-#### Linux / Replit (Auto-installed)
-- `Xvfb` - Virtual framebuffer X11 server
-- `x11vnc` - VNC server for X11
-- `chromium` - Browser for Puppeteer
-
 #### Windows
-- Chrome or Chromium installed on system
-- Puppeteer will auto-detect the browser
+- Chrome or Chromium installed on system (auto-detected by Puppeteer)
+- Node.js 18+ (verified by start.bat launcher)
 
 ### Node.js Packages
 All packages installed via `package.json`:
 - Core: `express`, `puppeteer`, `ws`
 - Frontend: `react`, `vite`, `tailwindcss`
-- VNC: `novnc-core`
 - Forms: `react-hook-form`, `zod`
 - UI: `@radix-ui/*`, `lucide-react`
 
@@ -248,7 +232,6 @@ The app is configured for **autoscale deployment** (stateless):
 1. **In-Memory Storage**: Data lost on server restart (friends, submissions, cookies)
 2. **Single Session**: Only one automation can run at a time
 3. **Cookie Persistence**: Cookies only persist during app runtime
-4. **VNC Security**: VNC server bound to localhost only for security
 
 ## Future Enhancements
 
@@ -261,10 +244,10 @@ The app is configured for **autoscale deployment** (stateless):
 
 ## Troubleshooting
 
-### VNC Not Connecting
-- Check if VNC server started (logs should show "VNC server started")
-- Verify WebSocket proxy is running on `/vnc` path
-- Check browser console for noVNC connection errors
+### Chrome Window Not Appearing
+- Check if Chrome is installed on your system
+- Verify Puppeteer can detect Chrome (check automation logs)
+- Ensure no other Puppeteer instances are running
 
 ### CAPTCHA Not Detecting as Solved
 - Ensure `cf-turnstile-response` input has value >10 characters
