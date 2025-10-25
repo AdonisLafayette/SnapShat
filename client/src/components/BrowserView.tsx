@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import GlassCard from "./GlassCard";
 import { Monitor, Activity } from "lucide-react";
 
 interface BrowserViewProps {
@@ -43,23 +43,25 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
   }
 
   return (
-    <Card className="bg-white/5 backdrop-blur-md border-white/10" data-testid="browser-view-card">
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span className="flex items-center gap-2">
-            <Monitor className="h-5 w-5" />
+    <GlassCard className="shadow-lg" data-testid="browser-view-card">
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="flex items-center gap-3 text-xl font-bold text-foreground">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
+              <Monitor className="h-5 w-5 text-blue-400" />
+            </div>
             Live Browser Status
-          </span>
-          <span className="flex items-center gap-2 text-sm font-normal text-blue-400">
-            <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
+          </h2>
+          <span className="flex items-center gap-2 text-sm font-semibold text-blue-400">
+            <span className="h-2.5 w-2.5 bg-green-500 rounded-full animate-pulse shadow-lg shadow-green-500/50" />
             Processing {currentFriend.username}
           </span>
-        </CardTitle>
-        <CardDescription>
+        </div>
+        <p className="text-sm text-muted-foreground/80">
           The automation is working in the background. If CAPTCHA is detected, you'll be prompted to solve it.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+        </p>
+      </div>
+      <div className="space-y-4">
         {isCaptchaDetected ? (
           <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
             <div className="flex items-start gap-3">
@@ -118,7 +120,7 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
             <li>🍪 <strong>Smart Cookies:</strong> Your session is saved to minimize future CAPTCHAs</li>
           </ul>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </GlassCard>
   );
 }
