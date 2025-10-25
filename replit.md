@@ -4,7 +4,7 @@
 A full-stack web application that automates the process of submitting Snapchat streak restoration requests. The application handles form filling, CAPTCHA detection, cookie persistence, and provides a live VNC viewer for manual interaction when needed.
 
 ## Last Updated
-October 24, 2025 - Migration to Replit environment completed
+October 25, 2025 - Cross-platform support added (Linux/Replit + Windows)
 
 ## Project Architecture
 
@@ -184,12 +184,36 @@ Binary WebSocket proxy that:
 - Manages keepalive pings
 - Enables noVNC client connection
 
+## Cross-Platform Support
+
+The application now supports both **Linux (Replit)** and **Windows (local PC)**:
+
+### Linux / Replit
+- Uses VNC stack (Xvfb + x11vnc) for browser viewing
+- Chromium from Nix store
+- Embedded noVNC viewer in the dashboard
+- Full automation with captcha viewer
+
+### Windows
+- Uses system Chrome (auto-detected by Puppeteer)
+- Headful browser opens natively on desktop
+- No VNC needed - interact directly with browser window
+- Same automation capabilities
+
+The platform is **automatically detected** and the appropriate browser configuration is used.
+
 ## Environment Setup
 
-### Required System Dependencies (Pre-installed in Replit)
+### Required System Dependencies
+
+#### Linux / Replit (Auto-installed)
 - `Xvfb` - Virtual framebuffer X11 server
 - `x11vnc` - VNC server for X11
 - `chromium` - Browser for Puppeteer
+
+#### Windows
+- Chrome or Chromium installed on system
+- Puppeteer will auto-detect the browser
 
 ### Node.js Packages
 All packages installed via `package.json`:

@@ -44,6 +44,7 @@ export class SnapchatAutomation {
         }
         
         let browserEnv: any = { ...process.env };
+        let vncRunning = false;
         
         // Start VNC server only on Linux (for Replit environment)
         if (isLinux) {
@@ -52,18 +53,22 @@ export class SnapchatAutomation {
             await vncManager.start();
             const displayNum = vncManager.getDisplayNumber();
             browserEnv.DISPLAY = `:${displayNum}`;
+            vncRunning = true;
             console.log(`✓ VNC server started on display :${displayNum}`);
           } catch (vncError: any) {
             console.warn('⚠️ VNC failed to start:', vncError.message);
-            console.log('   Continuing without VNC - browser will run headless');
-            // Continue without VNC - will run headless as fallback
+            console.log('   Falling back to headless mode (no CAPTCHA viewer)');
+            vncRunning = false;
           }
         } else {
-          console.log('ℹ️ Skipping VNC on non-Linux platform');
+          console.log('ℹ️ Skipping VNC on non-Linux platform - browser will open natively');
         }
         
+        // Configure browser launch options
         const launchOptions: any = {
-          headless: false, // Show browser for captcha solving
+          // On Linux: headless if VNC failed, headful if VNC running
+          // On Windows: always headful (opens native window)
+          headless: isLinux && !vncRunning ? 'new' : false,
           args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
