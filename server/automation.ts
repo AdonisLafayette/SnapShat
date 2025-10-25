@@ -19,6 +19,7 @@ export class SnapchatAutomation {
   private shouldStop = false;
   private currentPage: Page | null = null;
   private currentFriend: Friend | null = null;
+  private isCaptchaDetected = false;
 
   async initialize() {
     if (!this.browser) {
@@ -122,6 +123,8 @@ export class SnapchatAutomation {
 
   async detectCaptcha(page: Page): Promise<boolean> {
     try {
+      // Reset flag before detection
+      this.isCaptchaDetected = false;
       // Check for Cloudflare Turnstile (most common on Snapchat)
       const turnstileStatus = await page.evaluate(() => {
         const turnstileInputs = document.querySelectorAll('input[name="cf-turnstile-response"]');
@@ -149,6 +152,7 @@ export class SnapchatAutomation {
           return false; // Not blocked by CAPTCHA anymore
         } else {
           console.log('✓ Cloudflare Turnstile CAPTCHA detected (not solved yet)');
+          this.isCaptchaDetected = true;
           return true; // Still blocked by CAPTCHA
         }
       }
@@ -170,6 +174,7 @@ export class SnapchatAutomation {
         const element = await page.$(selector);
         if (element) {
           console.log('✓ CAPTCHA detected with selector:', selector);
+          this.isCaptchaDetected = true;
           return true;
         }
       }
@@ -186,9 +191,11 @@ export class SnapchatAutomation {
 
       if (hasCaptchaText) {
         console.log('✓ CAPTCHA detected from page text');
+        this.isCaptchaDetected = true;
         return true;
       }
 
+      this.isCaptchaDetected = false;
       return false;
     } catch (error) {
       console.error('Error detecting captcha:', error);
@@ -831,6 +838,10 @@ export class SnapchatAutomation {
 
   getCurrentFriend(): Friend | null {
     return this.currentFriend;
+  }
+
+  getIsCaptchaDetected(): boolean {
+    return this.isCaptchaDetected;
   }
 
   async getCurrentScreenshot(): Promise<string | null> {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, Monitor, AlertCircle, ExternalLink, RefreshCw } from "lucide-react";
+import { Monitor, ExternalLink, Activity } from "lucide-react";
 
 interface BrowserViewProps {
   isActive: boolean;
@@ -9,64 +9,53 @@ interface BrowserViewProps {
 }
 
 export default function BrowserView({ isActive, currentFriend }: BrowserViewProps) {
-  const [screenshot, setScreenshot] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [isCaptchaDetected, setIsCaptchaDetected] = useState(false);
 
-  // Fetch screenshot when automation is active
+  // Poll for CAPTCHA status
   useEffect(() => {
     if (!isActive) {
-      setScreenshot(null);
+      setIsCaptchaDetected(false);
       return;
     }
 
-    const fetchScreenshot = async () => {
+    const checkStatus = async () => {
       try {
-        const response = await fetch('/api/process/screenshot');
-        if (response.ok) {
-          const data = await response.json();
-          setScreenshot(data.screenshot);
-          setError(null);
-          setLastUpdate(new Date());
-        } else {
-          setError('Browser not ready yet...');
-        }
+        // Add timestamp to bypass all caching (browser + server ETag)
+        const timestamp = Date.now();
+        const response = await fetch(`/api/process/status?_=${timestamp}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        });
+        const data = await response.json();
+        setIsCaptchaDetected(data.isCaptchaDetected || false);
       } catch (err) {
-        console.error('Error fetching screenshot:', err);
-        setError('Failed to get browser view');
+        console.error('Error fetching status:', err);
       }
     };
 
-    // Initial fetch
-    fetchScreenshot();
+    // Initial check
+    checkStatus();
 
-    // Poll for screenshots every 2 seconds
-    const interval = setInterval(fetchScreenshot, 2000);
+    // Poll every 2 seconds
+    const interval = setInterval(checkStatus, 2000);
 
     return () => clearInterval(interval);
   }, [isActive]);
 
-  const handleOpenCaptcha = () => {
-    const snapchatUrl = 'https://help.snapchat.com/hc/en-us/requests/new?co=true&ticket_form_id=149423';
-    window.open(snapchatUrl, '_blank', 'width=1200,height=800');
-  };
-
-  const handleRefresh = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch('/api/process/screenshot');
-      if (response.ok) {
-        const data = await response.json();
-        setScreenshot(data.screenshot);
-        setError(null);
-        setLastUpdate(new Date());
-      }
-    } catch (err) {
-      console.error('Error refreshing screenshot:', err);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleOpenVNC = () => {
+    // Open VNC viewer in a popup window
+    const width = 1280;
+    const height = 800;
+    const left = (screen.width - width) / 2;
+    const top = (screen.height - height) / 2;
+    
+    window.open(
+      '/vnc.html',
+      'vnc-viewer',
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+    );
   };
 
   if (!isActive || !currentFriend) {
@@ -79,99 +68,77 @@ export default function BrowserView({ isActive, currentFriend }: BrowserViewProp
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center gap-2">
             <Monitor className="h-5 w-5" />
-            Browser View
+            Live Browser Status
           </span>
-          {isActive && (
-            <span className="flex items-center gap-2 text-sm font-normal text-blue-400">
-              <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
-              Live - Processing {currentFriend.username}
-            </span>
-          )}
+          <span className="flex items-center gap-2 text-sm font-normal text-blue-400">
+            <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
+            Processing {currentFriend.username}
+          </span>
         </CardTitle>
         <CardDescription>
-          The automation is working on Snapchat's website. If CAPTCHA appears, click the button below to solve it manually.
+          The automation is working in the background. If CAPTCHA is detected, you'll be prompted to solve it.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="border border-white/10 rounded-lg overflow-hidden bg-black">
-          {error ? (
-            <div className="flex items-center justify-center h-full min-h-[400px] p-8 text-center">
-              <div className="space-y-2">
-                <AlertCircle className="h-8 w-8 text-yellow-500 mx-auto" />
-                <p className="text-gray-400">{error}</p>
-                {error.includes('not ready') && (
-                  <p className="text-sm text-gray-500">The browser is starting up...</p>
-                )}
+        {isCaptchaDetected ? (
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                <Activity className="h-5 w-5 text-yellow-400 animate-pulse" />
               </div>
-            </div>
-          ) : !screenshot ? (
-            <div className="flex items-center justify-center h-full min-h-[400px] p-8 text-center">
-              <div className="space-y-2">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-400 mx-auto" />
-                <p className="text-gray-400">Loading browser view...</p>
-              </div>
-            </div>
-          ) : (
-            <div className="relative">
-              <img 
-                src={screenshot} 
-                alt="Browser screenshot"
-                className="w-full h-auto"
-                data-testid="browser-screenshot"
-              />
-              <div className="absolute top-2 right-2">
+              <div className="flex-1 space-y-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-yellow-200 mb-1">
+                    🤖 CAPTCHA Detected - Action Required!
+                  </h3>
+                  <p className="text-xs text-gray-300">
+                    The automation has encountered a CAPTCHA challenge. Click the button below to open the live browser view and solve it.
+                  </p>
+                </div>
                 <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={handleRefresh}
-                  disabled={isLoading}
-                  className="bg-black/50 hover:bg-black/70"
-                  data-testid="button-refresh-screenshot"
+                  onClick={handleOpenVNC}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+                  size="lg"
+                  data-testid="button-open-vnc"
                 >
-                  <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                  <ExternalLink className="h-5 w-5 mr-2" />
+                  Open Live Browser View
                 </Button>
+                <p className="text-xs text-gray-400 text-center">
+                  A popup window will open with real-time browser access
+                </p>
               </div>
             </div>
-          )}
-        </div>
-
-        <div className="space-y-3">
-          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
-            <p className="text-sm text-yellow-200 font-semibold mb-2">🤖 CAPTCHA Detected - Action Required!</p>
-            <p className="text-xs text-gray-300 mb-3">
-              The automation has detected a CAPTCHA and is waiting for you to solve it. Click the button below to open the page in a popup window.
-            </p>
-            <Button
-              onClick={handleOpenCaptcha}
-              className="w-full bg-blue-600 hover:bg-blue-700"
-              size="lg"
-              data-testid="button-solve-captcha"
-            >
-              <ExternalLink className="h-5 w-5 mr-2" />
-              Open CAPTCHA Page to Solve
-            </Button>
           </div>
-        </div>
+        ) : (
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <Monitor className="h-5 w-5 text-blue-400" />
+              <div>
+                <h3 className="text-sm font-semibold text-blue-200 mb-1">
+                  Automation Running Smoothly
+                </h3>
+                <p className="text-xs text-gray-300">
+                  The bot is currently filling out the form. No action needed right now.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="text-sm text-gray-400 bg-black/20 p-3 rounded-lg border border-white/5">
-          <p className="font-semibold mb-1 flex items-center gap-2">
+          <p className="font-semibold mb-2 flex items-center gap-2">
             <Monitor className="h-4 w-4" />
             How it works:
           </p>
-          <ul className="space-y-1 text-xs">
-            <li>• <strong>Automation:</strong> The bot fills forms automatically in the background</li>
-            <li>• <strong>CAPTCHA appears:</strong> Click "Open Page to Solve CAPTCHA" button above</li>
-            <li>• <strong>Solve manually:</strong> Complete the CAPTCHA in the popup window</li>
-            <li>• <strong>Auto-resume:</strong> Once solved, close the popup and automation continues</li>
-            <li>• <strong>Live view:</strong> The screenshot updates every 2 seconds</li>
+          <ul className="space-y-1.5 text-xs">
+            <li>✨ <strong>Automatic:</strong> The bot fills forms automatically in the background</li>
+            <li>🔍 <strong>CAPTCHA Detection:</strong> When CAPTCHA appears, you'll see an alert above</li>
+            <li>🖱️ <strong>Live Browser:</strong> Click "Open Live Browser View" for real-time interaction</li>
+            <li>✅ <strong>Auto-Resume:</strong> Once you solve the CAPTCHA, automation continues automatically</li>
+            <li>🍪 <strong>Smart Cookies:</strong> Your session is saved to minimize future CAPTCHAs</li>
           </ul>
         </div>
-
-        {screenshot && (
-          <div className="text-xs text-center text-gray-500 flex items-center justify-center gap-2">
-            Last updated: {lastUpdate.toLocaleTimeString()}
-          </div>
-        )}
       </CardContent>
     </Card>
   );

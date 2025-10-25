@@ -322,6 +322,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const currentFriend = automation.getCurrentFriend();
       res.json({ 
         isProcessing: automation.getIsProcessing(),
+        isCaptchaDetected: automation.getIsCaptchaDetected(),
         currentFriend: currentFriend ? { 
           id: currentFriend.id, 
           username: currentFriend.username 
