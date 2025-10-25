@@ -346,8 +346,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/process/vnc-url', async (req, res) => {
     try {
+      // Start VNC server on-demand if not already running
       if (!vncManager.getIsRunning()) {
-        return res.status(404).json({ error: 'VNC not running' });
+        console.log('[VNC] VNC not running, starting it now...');
+        try {
+          await vncManager.start();
+          console.log('[VNC] VNC server started successfully for on-demand connection');
+        } catch (startError: any) {
+          console.error('[VNC] Failed to start VNC server:', startError);
+          return res.status(500).json({ error: 'Failed to start VNC server: ' + startError.message });
+        }
       }
       
       // Build WebSocket URL based on request host
