@@ -24,19 +24,46 @@ export class SnapchatAutomation {
   async initialize() {
     if (!this.browser) {
       try {
-        // Start VNC server first
-        console.log('🚀 Starting VNC server...');
-        await vncManager.start();
-        const displayNum = vncManager.getDisplayNumber();
+        const isLinux = process.platform === 'linux';
+        const isWindows = process.platform === 'win32';
         
-        // Use system Chromium (installed via Nix)
-        const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium';
+        // Detect browser executable path based on platform
+        let executablePath: string | undefined;
         
-        console.log(`🚀 Launching browser on display :${displayNum} with executablePath:`, executablePath);
+        if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+          executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+          console.log('🔧 Using PUPPETEER_EXECUTABLE_PATH:', executablePath);
+        } else if (isLinux) {
+          // On Linux/Replit, use Chromium from Nix store
+          executablePath = '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium';
+          console.log('🐧 Linux detected - using Nix Chromium');
+        } else if (isWindows) {
+          // On Windows, let Puppeteer find Chrome automatically
+          executablePath = undefined;
+          console.log('🪟 Windows detected - using system Chrome');
+        }
         
-        this.browser = await puppeteer.launch({
-          headless: false, // Show browser for captcha solving (visible in VNC)
-          executablePath,
+        let browserEnv: any = { ...process.env };
+        
+        // Start VNC server only on Linux (for Replit environment)
+        if (isLinux) {
+          console.log('🚀 Starting VNC server (Linux)...');
+          try {
+            await vncManager.start();
+            const displayNum = vncManager.getDisplayNumber();
+            browserEnv.DISPLAY = `:${displayNum}`;
+            console.log(`✓ VNC server started on display :${displayNum}`);
+          } catch (vncError: any) {
+            console.warn('⚠️ VNC failed to start:', vncError.message);
+            console.log('   Continuing without VNC - browser will run headless');
+            // Continue without VNC - will run headless as fallback
+          }
+        } else {
+          console.log('ℹ️ Skipping VNC on non-Linux platform');
+        }
+        
+        const launchOptions: any = {
+          headless: false, // Show browser for captcha solving
           args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -46,10 +73,18 @@ export class SnapchatAutomation {
             '--disable-features=IsolateOrigins,site-per-process',
           ],
           defaultViewport: { width: 1920, height: 1080 },
-          env: { ...process.env, DISPLAY: `:${displayNum}` }
-        });
+          env: browserEnv
+        };
         
-        console.log('✓ Browser initialized successfully on VNC display');
+        // Only set executablePath if we have one
+        if (executablePath) {
+          launchOptions.executablePath = executablePath;
+        }
+        
+        console.log('🚀 Launching browser...');
+        this.browser = await puppeteer.launch(launchOptions);
+        
+        console.log('✓ Browser initialized successfully');
         
         // Test browser is working by creating and closing a test page
         const testPage = await this.browser.newPage();

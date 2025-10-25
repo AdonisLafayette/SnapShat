@@ -1,0 +1,631 @@
+PS E:\snapshat> set NODE_ENV=development
+PS E:\snapshat> npx tsx server/index.ts
+[VNC Proxy] Setting up VNC WebSocket server on path /vnc
+2:47:41 PM [express] Serving on http://127.0.0.1:5000
+Browserslist: browsers data (caniuse-lite) is 12 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+WebSocket client connected
+WebSocket client disconnected
+2:49:30 PM [express] GET /api/friends 200 in 8ms :: []
+2:49:30 PM [express] GET /api/submissions 200 in 1ms :: []
+2:49:30 PM [express] GET /api/settings 200 in 3ms
+2:49:30 PM [express] GET /api/process/status 200 in 3ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:49:33 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:49:34 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:49:35 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:49:36 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:49:37 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:49:38 PM [express] GET /api/process/status 304 in 3ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:49:40 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:49:41 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:49:41 PM [express] POST /api/friends 200 in 5ms :: {"username":"monashamaon21","profilePictureUrl"…
+2:49:41 PM [express] GET /api/friends 200 in 2ms :: [{"username":"monashamaon21","profilePictureUrl"…
+2:49:42 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:49:43 PM [express] GET /api/process/status 304 in 2ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:49:44 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:49:45 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:49:46 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:49:47 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:49:48 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:49:49 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:49:50 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:49:51 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:49:52 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:49:53 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:49:54 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:49:55 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:49:56 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:49:57 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:49:58 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:49:59 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:01 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:50:02 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:03 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:04 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:50:05 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:06 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:07 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:50:08 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:09 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:10 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:50:11 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:11 PM [express] POST /api/settings 200 in 3ms :: {"username":"azal.daniel","email":"arabicphysi…
+2:50:11 PM [express] GET /api/settings 200 in 1ms :: {"username":"azal.daniel","email":"arabicphysic…
+2:50:12 PM [express] GET /api/process/status 304 in 3ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:13 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:50:14 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:15 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:16 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:50:17 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:18 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:50:19 PM [express] GET /api/process/status 304 in 2ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:20 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+🚀 Starting VNC server...
+[VNC] Starting Xvfb on :99
+[VNC] Xvfb error: Error: spawn Xvfb ENOENT
+    at ChildProcess._handle.onexit (node:internal/child_process:285:19)
+    at onErrorNT (node:internal/child_process:483:16)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'spawn Xvfb',
+  path: 'Xvfb',
+  spawnargs: [
+    ':99',
+    '-screen',
+    '0',
+    '1920x1080x24',
+    '-ac',
+    '+extension',
+    'GLX',
+    '+render',
+    '-noreset'
+  ]
+}
+2:50:21 PM [express] POST /api/process/start 200 in 94ms :: {"success":true,"message":"Batch process…
+2:50:21 PM [express] GET /api/process/status 200 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+WebSocket client connected
+WebSocket client disconnected
+2:50:23 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+[VNC] Starting x11vnc on port 5900 (localhost only)
+[VNC] x11vnc error: Error: spawn x11vnc ENOENT
+    at ChildProcess._handle.onexit (node:internal/child_process:285:19)
+    at onErrorNT (node:internal/child_process:483:16)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'spawn x11vnc',
+  path: 'x11vnc',
+  spawnargs: [
+    '-display',   ':99',
+    '-localhost', '-nopw',
+    '-forever',   '-shared',
+    '-rfbport',   '5900',
+    '-ncache',    '10'
+  ]
+}
+2:50:24 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+2:50:25 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+WebSocket client connected
+WebSocket client disconnected
+2:50:26 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":true,"isCaptchaDetected":…
+2:50:27 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+2:50:28 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+WebSocket client connected
+WebSocket client disconnected
+2:50:29 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+2:50:30 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+2:50:31 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+WebSocket client connected
+WebSocket client disconnected
+2:50:32 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+2:50:33 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+2:50:34 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+WebSocket client connected
+WebSocket client disconnected
+2:50:35 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+[VNC] Failed to start VNC stack: Error: Timeout waiting for port 5900
+    at Socket.<anonymous> (E:\SnapShat\server\vnc-manager.ts:151:20)
+    at Socket.emit (node:events:508:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+[VNC] Stopping all VNC processes
+[VNC] All processes stopped
+❌ Failed to initialize browser: Timeout waiting for port 5900
+Batch processing error: Error: Browser initialization failed: Timeout waiting for port 5900
+    at SnapchatAutomation.initialize (E:\SnapShat\server\automation.ts:61:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SnapchatAutomation.processBatch (E:\SnapShat\server\automation.ts:765:7)
+2:50:36 PM [express] GET /api/process/status 200 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:37 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:50:38 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:39 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:40 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:50:41 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:42 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:43 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:50:44 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:45 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:46 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:50:48 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:49 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:50 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:50:51 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:52 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:53 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:50:54 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:55 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:56 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:50:57 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:58 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:50:59 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:51:00 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:01 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:51:02 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:03 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:04 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:51:05 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:06 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:07 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:51:08 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:09 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:10 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:51:11 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:12 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:13 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:51:15 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:16 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:17 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:51:18 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:19 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:20 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:51:21 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:22 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:23 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:51:24 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:25 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:26 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:51:27 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:28 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:29 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:51:30 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:31 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:32 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:51:33 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:34 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:35 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:51:36 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:37 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:38 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:51:39 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:40 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:41 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:51:42 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:43 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:44 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:51:45 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:46 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:47 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:51:48 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:50 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:51 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:51:52 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:53 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:54 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:51:55 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:56 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:57 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:51:58 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:51:59 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:52:00 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:01 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:02 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:52:03 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:04 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:05 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:52:06 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:07 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:08 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:52:09 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:10 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:11 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:52:12 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:13 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:14 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:52:15 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:16 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:17 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:52:18 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:19 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:20 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:52:21 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:22 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:24 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:52:25 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:26 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:27 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:52:28 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+🚀 Starting VNC server...
+[VNC] Starting Xvfb on :99
+[VNC] Xvfb error: Error: spawn Xvfb ENOENT
+    at ChildProcess._handle.onexit (node:internal/child_process:285:19)
+    at onErrorNT (node:internal/child_process:483:16)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'spawn Xvfb',
+  path: 'Xvfb',
+  spawnargs: [
+    ':99',
+    '-screen',
+    '0',
+    '1920x1080x24',
+    '-ac',
+    '+extension',
+    'GLX',
+    '+render',
+    '-noreset'
+  ]
+}
+2:52:29 PM [express] POST /api/process/start 200 in 21ms :: {"success":true,"message":"Batch process…
+2:52:29 PM [express] GET /api/process/status 200 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+2:52:30 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+WebSocket client connected
+WebSocket client disconnected
+[VNC] Starting x11vnc on port 5900 (localhost only)
+[VNC] x11vnc error: Error: spawn x11vnc ENOENT
+    at ChildProcess._handle.onexit (node:internal/child_process:285:19)
+    at onErrorNT (node:internal/child_process:483:16)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'spawn x11vnc',
+  path: 'x11vnc',
+  spawnargs: [
+    '-display',   ':99',
+    '-localhost', '-nopw',
+    '-forever',   '-shared',
+    '-rfbport',   '5900',
+    '-ncache',    '10'
+  ]
+}
+2:52:31 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+2:52:32 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":true,"isCaptchaDetected":…
+2:52:33 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+WebSocket client connected
+WebSocket client disconnected
+2:52:34 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+2:52:35 PM [express] GET /api/process/status 304 in 2ms :: {"isProcessing":true,"isCaptchaDetected":…
+2:52:36 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":true,"isCaptchaDetected":…
+WebSocket client connected
+WebSocket client disconnected
+2:52:37 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+2:52:38 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":true,"isCaptchaDetected":…
+2:52:39 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+WebSocket client connected
+WebSocket client disconnected
+2:52:40 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+2:52:41 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":true,"isCaptchaDetected":…
+2:52:42 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":true,"isCaptchaDetected":…
+WebSocket client connected
+WebSocket client disconnected
+[VNC] Failed to start VNC stack: Error: Timeout waiting for port 5900
+    at Socket.<anonymous> (E:\SnapShat\server\vnc-manager.ts:151:20)
+    at Socket.emit (node:events:508:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+[VNC] Stopping all VNC processes
+[VNC] All processes stopped
+❌ Failed to initialize browser: Timeout waiting for port 5900
+Batch processing error: Error: Browser initialization failed: Timeout waiting for port 5900
+    at SnapchatAutomation.initialize (E:\SnapShat\server\automation.ts:61:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async SnapchatAutomation.processBatch (E:\SnapShat\server\automation.ts:765:7)
+2:52:43 PM [express] GET /api/process/status 200 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:44 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:45 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:52:46 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:47 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:48 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:52:49 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:50 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:51 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:52:53 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:54 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:55 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:52:56 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:57 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:52:58 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:52:59 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:00 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:53:01 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:02 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:03 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:53:04 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:05 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:06 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:53:07 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:08 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:09 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:53:10 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:11 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:12 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:53:13 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:14 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:15 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:53:16 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:17 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:18 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:53:19 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:20 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:21 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:53:22 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:23 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:24 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:53:25 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:27 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:28 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:53:29 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:30 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:31 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:53:32 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:33 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:34 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:53:35 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:36 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:37 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:53:38 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:39 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:40 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:53:41 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:42 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:43 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:53:44 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:45 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:53:46 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:47 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:48 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:53:49 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:50 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:51 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:53:52 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:53 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:54 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:53:55 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:57 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:53:58 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:53:59 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:54:00 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:54:01 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:54:02 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:54:03 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:54:04 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:54:05 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+WebSocket client connected
+WebSocket client disconnected
+2:55:39 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+2:55:40 PM [express] GET /api/process/status 304 in 0ms :: {"isProcessing":false,"isCaptchaDetected"…
+WebSocket client connected
+WebSocket client disconnected
+2:55:41 PM [express] GET /api/process/status 304 in 1ms :: {"isProcessing":false,"isCaptchaDetected"…
