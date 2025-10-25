@@ -5,7 +5,6 @@ import { storage } from "./storage";
 import { automation } from "./automation";
 import { insertFriendSchema, insertSettingsSchema } from "@shared/schema";
 import multer from "multer";
-import { vncManager } from "./vnc-manager";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -24,105 +23,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ws.on('close', () => {
       console.log('WebSocket client disconnected');
       clients.delete(ws);
-    });
-  });
-
-  // VNC WebSocket proxy server with comprehensive logging
-  console.log('[VNC Proxy] Setting up VNC WebSocket server on path /vnc');
-  const vncWss = new WebSocketServer({ 
-    server: httpServer, 
-    path: '/vnc',
-    handleProtocols: (protocols, request) => {
-      // Convert Set to Array for easier handling
-      const protocolsArray = Array.from(protocols);
-      console.log('[VNC Proxy] Protocols requested:', protocolsArray);
-      // Accept binary subprotocol for noVNC compatibility, or accept any protocol
-      if (protocolsArray.includes('binary')) {
-        console.log('[VNC Proxy] Accepting binary protocol');
-        return 'binary';
-      }
-      // Accept connection even without binary protocol
-      const selectedProtocol = protocolsArray.length > 0 ? protocolsArray[0] : '';
-      console.log('[VNC Proxy] Selected protocol:', selectedProtocol || '(none)');
-      return selectedProtocol;
-    }
-  });
-  
-  vncWss.on('error', (error) => {
-    console.error('[VNC Proxy] WebSocket Server error:', error);
-  });
-  
-  vncWss.on('connection', (clientWs, request) => {
-    console.log('[VNC Proxy] ✓ Client connected with protocol:', clientWs.protocol);
-    console.log('[VNC Proxy] Request URL:', request.url);
-    
-    // Configure WebSocket for binary frames
-    clientWs.binaryType = 'arraybuffer';
-    
-    if (!vncManager.getIsRunning()) {
-      console.error('[VNC Proxy] VNC server not running');
-      clientWs.close();
-      return;
-    }
-
-    // Connect to VNC server
-    const net = require('net');
-    const vncSocket = new net.Socket();
-    const vncPort = vncManager.getVNCPort();
-
-    // Keepalive ping interval
-    const pingInterval = setInterval(() => {
-      if (clientWs.readyState === WebSocket.OPEN) {
-        clientWs.ping();
-      }
-    }, 30000); // Ping every 30 seconds
-
-    vncSocket.connect(vncPort, 'localhost', () => {
-      console.log('[VNC Proxy] Connected to VNC server');
-    });
-
-    // Forward data from VNC server to client (binary frames)
-    vncSocket.on('data', (data: Buffer) => {
-      if (clientWs.readyState === WebSocket.OPEN) {
-        clientWs.send(data, { binary: true });
-      }
-    });
-
-    // Forward data from client to VNC server (binary frames)
-    clientWs.on('message', (data: any, isBinary: boolean) => {
-      if (isBinary || Buffer.isBuffer(data) || data instanceof ArrayBuffer) {
-        const buffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
-        vncSocket.write(buffer);
-      }
-    });
-
-    // Handle disconnections
-    vncSocket.on('close', () => {
-      console.log('[VNC Proxy] VNC server connection closed');
-      clearInterval(pingInterval);
-      clientWs.close();
-    });
-
-    vncSocket.on('error', (err: Error) => {
-      console.error('[VNC Proxy] VNC socket error:', err);
-      clearInterval(pingInterval);
-      clientWs.close();
-    });
-
-    clientWs.on('close', () => {
-      console.log('[VNC Proxy] Client disconnected');
-      clearInterval(pingInterval);
-      vncSocket.destroy();
-    });
-
-    clientWs.on('error', (err: Error) => {
-      console.error('[VNC Proxy] Client socket error:', err);
-      clearInterval(pingInterval);
-      vncSocket.destroy();
-    });
-
-    clientWs.on('pong', () => {
-      console.log('[VNC Proxy] Keepalive pong received');
     });
   });
 
@@ -309,7 +209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/process/stop', async (req, res) => {
     try {
-      automation.stopProcessing();
+      await automation.stopProcessing();
       broadcast('processing_stopped', {});
       res.json({ success: true });
     } catch (error: any) {
@@ -340,36 +240,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: 'No active browser page' });
       }
       res.json({ screenshot: `data:image/png;base64,${screenshot}` });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
-  app.get('/api/process/vnc-url', async (req, res) => {
-    try {
-      // Start VNC server on-demand if not already running
-      if (!vncManager.getIsRunning()) {
-        console.log('[VNC] VNC not running, starting it now...');
-        try {
-          await vncManager.start();
-          console.log('[VNC] VNC server started successfully for on-demand connection');
-        } catch (startError: any) {
-          console.error('[VNC] Failed to start VNC server:', startError);
-          return res.status(500).json({ error: 'Failed to start VNC server: ' + startError.message });
-        }
-      }
-      
-      // Build WebSocket URL based on request host
-      const protocol = (req.secure || req.get('x-forwarded-proto') === 'https') ? 'wss' : 'ws';
-      const host = req.get('host') || 'localhost:5000';
-      const wsUrl = `${protocol}://${host}/vnc`;
-      
-      console.log(`[VNC] Protocol: ${protocol}, Host: ${host}, WebSocket URL: ${wsUrl}`);
-      
-      res.json({ 
-        url: wsUrl,
-        isRunning: vncManager.getIsRunning()
-      });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

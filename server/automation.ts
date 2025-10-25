@@ -1,7 +1,6 @@
 import puppeteer, { Browser, Page } from 'puppeteer';
 import { storage } from './storage';
 import type { Friend, SubmissionStatus } from '@shared/schema';
-import { vncManager } from './vnc-manager';
 
 const TICKET_URL = "https://help.snapchat.com/hc/en-us/requests/new?co=true&ticket_form_id=149423";
 
@@ -24,51 +23,11 @@ export class SnapchatAutomation {
   async initialize() {
     if (!this.browser) {
       try {
-        const isLinux = process.platform === 'linux';
-        const isWindows = process.platform === 'win32';
+        console.log('🚀 Launching Chrome browser...');
         
-        // Detect browser executable path based on platform
-        let executablePath: string | undefined;
-        
-        if (process.env.PUPPETEER_EXECUTABLE_PATH) {
-          executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
-          console.log('🔧 Using PUPPETEER_EXECUTABLE_PATH:', executablePath);
-        } else if (isLinux) {
-          // On Linux/Replit, use Chromium from Nix store
-          executablePath = '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium';
-          console.log('🐧 Linux detected - using Nix Chromium');
-        } else if (isWindows) {
-          // On Windows, let Puppeteer find Chrome automatically
-          executablePath = undefined;
-          console.log('🪟 Windows detected - using system Chrome');
-        }
-        
-        let browserEnv: any = { ...process.env };
-        let vncRunning = false;
-        
-        // Start VNC server only on Linux (for Replit environment)
-        if (isLinux) {
-          console.log('🚀 Starting VNC server (Linux)...');
-          try {
-            await vncManager.start();
-            const displayNum = vncManager.getDisplayNumber();
-            browserEnv.DISPLAY = `:${displayNum}`;
-            vncRunning = true;
-            console.log(`✓ VNC server started on display :${displayNum}`);
-          } catch (vncError: any) {
-            console.warn('⚠️ VNC failed to start:', vncError.message);
-            console.log('   Falling back to headless mode (no CAPTCHA viewer)');
-            vncRunning = false;
-          }
-        } else {
-          console.log('ℹ️ Skipping VNC on non-Linux platform - browser will open natively');
-        }
-        
-        // Configure browser launch options
+        // Windows-optimized browser launch
         const launchOptions: any = {
-          // On Linux: headless if VNC failed, headful if VNC running
-          // On Windows: always headful (opens native window)
-          headless: isLinux && !vncRunning ? 'new' : false,
+          headless: false, // Always show browser window for CAPTCHA solving
           args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -76,25 +35,18 @@ export class SnapchatAutomation {
             '--disable-blink-features=AutomationControlled',
             '--disable-web-security',
             '--disable-features=IsolateOrigins,site-per-process',
+            '--start-maximized',
           ],
-          defaultViewport: { width: 1920, height: 1080 },
-          env: browserEnv
+          defaultViewport: { width: 1920, height: 1080 }
         };
         
-        // Only set executablePath if we have one
-        if (executablePath) {
-          launchOptions.executablePath = executablePath;
-        }
-        
-        console.log('🚀 Launching browser...');
         this.browser = await puppeteer.launch(launchOptions);
-        
         console.log('✓ Browser initialized successfully');
         
-        // Test browser is working by creating and closing a test page
+        // Test browser is working
         const testPage = await this.browser.newPage();
         await testPage.close();
-        console.log('✓ Browser test page creation successful');
+        console.log('✓ Browser ready');
       } catch (error: any) {
         console.error('❌ Failed to initialize browser:', error.message);
         this.browser = null;
@@ -864,8 +816,37 @@ export class SnapchatAutomation {
     }
   }
 
-  stopProcessing() {
+  async stopProcessing() {
+    console.log('🛑 Stop processing requested');
     this.shouldStop = true;
+    
+    // Close current page if open
+    if (this.currentPage) {
+      try {
+        await this.currentPage.close();
+        console.log('✓ Current page closed');
+      } catch (error) {
+        console.error('Error closing page:', error);
+      }
+      this.currentPage = null;
+    }
+    
+    // Close browser
+    if (this.browser) {
+      try {
+        await this.browser.close();
+        console.log('✓ Browser closed');
+      } catch (error) {
+        console.error('Error closing browser:', error);
+      }
+      this.browser = null;
+    }
+    
+    // Reset state
+    this.isProcessing = false;
+    this.isCaptchaDetected = false;
+    this.currentFriend = null;
+    console.log('✓ Processing stopped and cleaned up');
   }
 
   getIsProcessing(): boolean {
